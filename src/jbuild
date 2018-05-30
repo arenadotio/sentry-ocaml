@@ -2,6 +2,7 @@
 
 (library
  ((name sentry)
+  (public_name sentry)
   (libraries (async atdgen cohttp.async core uri uuidm yojson))
   (preprocess (pps (ppx_jane bisect_ppx -conditional
                     (-exclude-file .exclude))))
