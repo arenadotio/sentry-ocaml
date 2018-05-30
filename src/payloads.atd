@@ -1,0 +1,34 @@
+type datetime = string wrap <ocaml module="Datetime">
+type platform = string wrap <ocaml module="Platform">
+type severity_level = string wrap <ocaml module="Severity_level">
+type uuid = string wrap <ocaml module="Uuid">
+
+type sdk_info =
+  { name : string
+  ; version: string
+  ; ?integrations : string list nullable }
+
+type message =
+  { message : string
+  ; ?params : string list nullable
+  ; formatted : string }
+
+type event =
+  { event_id : uuid
+  ; timestamp : datetime
+  ; logger : string
+  ; platform : platform
+  ; sdk : sdk_info
+  ; ?level : severity_level nullable
+  ; ?culprit : string nullable
+  ; ?server_name : string nullable
+  ; ?release : string nullable
+  ; ?tags : (string * string) list nullable <json repr="object">
+  ; ?environment : string nullable
+  ; ?modules : (string * string) list nullable <json repr="object">
+  ; ?extra : (string * string) list nullable <json repr="object">
+  ; ?fingerprint : string list nullable
+  ; ?message <json name="sentry.interfaces.Message"> : message nullable }
+
+type response =
+  { id : uuid }

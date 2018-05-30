@@ -1,0 +1,18 @@
+(jbuild_version 1)
+
+(library
+ ((name sentry)
+  (libraries (async atdgen cohttp.async core uri uuidm yojson))
+  (preprocess (pps (ppx_jane bisect_ppx -conditional
+                    (-exclude-file .exclude))))
+  (preprocessor_deps (.exclude))))
+
+(rule
+ ((targets (payloads_j.ml payloads_j.mli))
+  (deps    (payloads.atd))
+  (action  (run atdgen -j -j-std ${^}))))
+
+(rule
+ ((targets (payloads_t.ml payloads_t.mli))
+  (deps    (payloads.atd))
+  (action  (run atdgen -t -j-std ${^}))))
