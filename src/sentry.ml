@@ -87,6 +87,23 @@ let make_uri { uri ; project_id } =
   sprintf "/api/%d/store" project_id
   |> Uri.with_path uri
 
+let rec send_request ~headers ~data uri =
+  let body = Cohttp_async.Body.of_string data in
+  let%bind response, body = Cohttp_async.Client.post ~headers ~body uri in
+  if Cohttp.Response.status response
+     |> Cohttp.Code.code_of_status
+     |> Cohttp.Code.is_redirection then
+    Cohttp.Response.headers response
+    |> Cohttp.Header.get_location
+    |> function
+    | None ->
+      failwithf "Redirect with no Location header from %s"
+        (Uri.to_string uri) ()
+    | Some uri ->
+      send_request ~headers ~data uri
+  else
+    return (response, body)
+
 let capture_message t message =
   match t with
   | None -> return None
@@ -94,12 +111,11 @@ let capture_message t message =
     let timestamp = Time.now () in
     let headers = make_headers t timestamp in
     let uri = make_uri t in
-    let body =
+    let data =
       Event.make ~timestamp ~message ()
       |> Event.to_json_string
-      |> Cohttp_async.Body.of_string
     in
-    let%bind response, body = Cohttp_async.Client.post ~headers ~body uri in
+    let%bind response, body = send_request ~headers ~data uri in
     match Cohttp.Response.status response with
     | `OK ->
       Cohttp_async.Body.to_string body
