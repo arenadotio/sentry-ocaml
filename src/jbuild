@@ -3,9 +3,10 @@
 (library
  ((name sentry)
   (public_name sentry)
-  (libraries (async atdgen cohttp.async core uri uuidm yojson))
+  (libraries (async atdgen cohttp.async core hex uri uuidm yojson))
+  (inline_tests ((flags (-verbose))))
   (preprocess (pps (ppx_jane bisect_ppx -conditional
-                    (-exclude-file .exclude))))
+                    (-exclude-file src/.exclude))))
   (preprocessor_deps (.exclude))))
 
 (rule

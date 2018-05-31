@@ -3,10 +3,13 @@ open Core
 type t = Uuidm.t
 
 let unwrap t =
-  Uuidm.to_string t
+  Uuidm.to_bytes t
+  |> Hex.of_string
+  |> Hex.show
 
 let wrap s =
-  Uuidm.of_string s
+  Hex.to_string (`Hex s)
+  |> Uuidm.of_bytes
   |> function
   | Some uuid -> uuid
   | None -> failwithf "Failed to parse %s as a UUID" s ()
