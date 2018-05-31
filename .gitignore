@@ -2,3 +2,4 @@ _build
 _coverage
 .merlin
 sentry.install
+bisect*.out
