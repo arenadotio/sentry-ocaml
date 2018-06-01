@@ -133,3 +133,13 @@ let capture_message t message =
 let capture_exception t ?message exn =
   Event.make ?message ~exn ()
   |> capture_event t
+
+let context t f =
+  Monitor.try_with ~extract_exn:true
+    ~rest:(`Call (fun e -> capture_exception t e |> ignore)) f
+  >>= function
+  | Ok res -> return res
+  | Error e ->
+    capture_exception t e
+    >>| fun _ ->
+    raise e
