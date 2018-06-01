@@ -28,8 +28,8 @@ module Frame = struct
     ; colno : int option
     ; abs_path : string option
     ; context_line : string option
-    ; pre_context : string list option
-    ; post_context : string list option
+    ; pre_context : string list
+    ; post_context : string list
     ; in_app : bool option
     ; vars : string String.Map.t
     ; package : string option
@@ -37,7 +37,7 @@ module Frame = struct
     (* TODO: image_addr, instruction_addr, symbol_addr, instruction_offset *) }
 
   let make ?filename ?function_ ?module_ ?lineno ?colno ?abs_path
-        ?context_line ?pre_context ?post_context ?in_app
+        ?context_line ?(pre_context=[]) ?(post_context=[]) ?in_app
         ?(vars=String.Map.empty) ?package ?platform () =
     [ filename ; function_ ; module_ ]
     |> List.for_all ~f:Option.is_none
@@ -72,20 +72,21 @@ module Frame = struct
                  ; abs_path ; context_line ; pre_context ; post_context
                  ; in_app ; vars ; package ; platform } =
     { Payloads_t.filename ; function_ ; module_ ; lineno ; colno ; abs_path
-    ; context_line ; pre_context ; post_context ; in_app
+    ; context_line
+    ; pre_context = empty_list_option pre_context
+    ; post_context = empty_list_option post_context
+    ; in_app
     ; vars = map_to_alist_option vars
     ; package ; platform }
 end
 
-type exception_ =
+type t =
   { type_ : string
   ; value : string
   ; module_ : string option
   ; thread_id : string option
   ; mechanism : Mechanism.t option
   ; stacktrace : Frame.t list }
-
-type t = exception_ list
 
 let make ~type_ ~value ?module_ ?thread_id ?mechanism ?(stacktrace=[]) () =
   { type_ ; value ; module_ ; thread_id ; mechanism ; stacktrace }

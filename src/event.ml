@@ -16,7 +16,7 @@ type t =
   ; modules : string String.Map.t
   ; extra : string String.Map.t
   ; fingerprint : string list option
-  ; exception_ : Exception.t option
+  ; exception_ : Exception.t list option
   ; message : Message.t option }
 
 let make ?event_id ?timestamp ?(logger="ocaml") ?(platform=`Other)
