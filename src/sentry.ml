@@ -104,17 +104,13 @@ let rec send_request ~headers ~data uri =
   else
     return (response, body)
 
-let capture_message t message =
+let capture_event t event =
   match t with
   | None -> return None
   | Some t ->
-    let timestamp = Time.now () in
-    let headers = make_headers t timestamp in
+    let headers = make_headers t event.Event.timestamp in
     let uri = make_uri t in
-    let data =
-      Event.make ~timestamp ~message ()
-      |> Event.to_json_string
-    in
+    let data = Event.to_json_string event in
     let%bind response, body = send_request ~headers ~data uri in
     match Cohttp.Response.status response with
     | `OK ->
@@ -129,3 +125,13 @@ let capture_message t message =
       in
       failwithf "Unexpected %d response from Sentry: %s"
         (Cohttp.Code.code_of_status status) errors ()
+
+let capture_message t message =
+  let timestamp = Time.now () in
+  Event.make ~timestamp ~message ()
+  |> capture_event t
+
+let capture_exn t ?message exn =
+  let timestamp = Time.now () in
+  Event.make ~timestamp ?message ~exn ()
+  |> capture_event t

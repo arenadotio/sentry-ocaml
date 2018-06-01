@@ -8,6 +8,24 @@ type sdk_info =
   ; version: string
   ; ?integrations : string list nullable }
 
+type mechanism =
+  { type_ <json name="type"> : string
+  ; ?description : string nullable
+  ; ?help_link : string nullable
+  ; ?handled : bool nullable
+  (* TODO: meta *)
+  ; ?data : (string * string) list nullable <json repr="object"> }
+
+type exception_value =
+  { type_ <json name="type"> : string
+  ; value : string
+  ; ?module_ <json name="module"> : string nullable
+  ; ?thread_id : string nullable
+  ; ?mechanism : mechanism nullable }
+
+type exception_ =
+  { values : exception_value list }
+
 type message =
   { message : string
   ; ?params : string list nullable
@@ -28,6 +46,7 @@ type event =
   ; ?modules : (string * string) list nullable <json repr="object">
   ; ?extra : (string * string) list nullable <json repr="object">
   ; ?fingerprint : string list nullable
+  ; ?exception_ <json name="exception"> : exception_ nullable
   ; ?message <json name="sentry.interfaces.Message"> : message nullable }
 
 type response =
