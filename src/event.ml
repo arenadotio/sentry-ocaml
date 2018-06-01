@@ -51,9 +51,10 @@ let base_sdk =
   ; version = Config.version
   ; integrations = None }
 
-let make ?event_id ~timestamp ?(logger="ocaml") ?(platform=`Other)
+let make ?event_id ?timestamp ?(logger="ocaml") ?(platform=`Other)
       ?(sdk=base_sdk) ?level ?culprit ?server_name ?release ?tags ?environment
       ?modules ?extra ?fingerprint ?message ?exn () =
+  let timestamp = Option.value timestamp ~default:(Time.now ()) in
   let event_id =
     match event_id with
     | Some id -> id

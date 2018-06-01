@@ -127,11 +127,9 @@ let capture_event t event =
         (Cohttp.Code.code_of_status status) errors ()
 
 let capture_message t message =
-  let timestamp = Time.now () in
-  Event.make ~timestamp ~message ()
+  Event.make ~message ()
   |> capture_event t
 
 let capture_exn t ?message exn =
-  let timestamp = Time.now () in
-  Event.make ~timestamp ?message ~exn ()
+  Event.make ?message ~exn ()
   |> capture_event t
