@@ -1,4 +1,4 @@
-open Core
+open Core_kernel
 
 (** [empty_list_option l] returns [None] if l is an empty list and returns
     [Some l] otherwise. This is useful for removing empty lists from our JSON

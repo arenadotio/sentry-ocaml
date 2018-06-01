@@ -1,5 +1,5 @@
 (** https://docs.sentry.io/clientdev/attributes/ *)
-open Core
+open Core_kernel
 
 type t = private
   { event_id : Uuidm.t

@@ -3,7 +3,7 @@
     The timestamp are in ISO 8601 format, without a timezone.
 
     https://docs.sentry.io/clientdev/attributes/#required-attributes *)
-open Core
+open Core_kernel
 
 type t = Time.t
 

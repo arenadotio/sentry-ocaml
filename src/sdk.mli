@@ -1,5 +1,5 @@
 (** https://docs.sentry.io/clientdev/attributes/#required-attributes *)
-open Core
+open Core_kernel
 
 type t = private
   { name : string

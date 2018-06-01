@@ -1,4 +1,4 @@
-open Core
+open Core_kernel
 
 type t = Time.t
 
@@ -7,7 +7,8 @@ let unwrap t =
   |> String.rstrip ~drop:((=) 'Z')
 
 let wrap s =
-  Time.of_string_gen ~if_no_timezone:(`Use_this_one Time.Zone.utc) s
+  Time.of_string_gen ~default_zone:(fun () -> Time.Zone.utc)
+    ~find_zone:(fun s -> failwithf "Unexpected time zone: %s" s ()) s
 
 let%test_unit "round-trip" =
   let expect = "2011-05-02T17:41:36.000000" in

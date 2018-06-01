@@ -1,5 +1,5 @@
 (** https://docs.sentry.io/clientdev/interfaces/exception/ *)
-open Core
+open Core_kernel
 
 module Mechanism : sig
   type t = private

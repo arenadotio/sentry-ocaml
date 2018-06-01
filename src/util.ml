@@ -1,4 +1,4 @@
-open Core
+open Core_kernel
 
 let empty_list_option l =
   match l with
