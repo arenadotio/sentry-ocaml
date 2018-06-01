@@ -130,6 +130,6 @@ let capture_message t message =
   Event.make ~message ()
   |> capture_event t
 
-let capture_exn t ?message exn =
+let capture_exception t ?message exn =
   Event.make ?message ~exn ()
   |> capture_event t

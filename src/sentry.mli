@@ -34,4 +34,4 @@ val of_dsn_exn : Uri.t -> t
 
 val capture_message : t -> string -> Uuidm.t option Deferred.t
 
-val capture_exn : t -> ?message:string -> exn -> Uuidm.t option Deferred.t
+val capture_exception : t -> ?message:string -> exn -> Uuidm.t option Deferred.t

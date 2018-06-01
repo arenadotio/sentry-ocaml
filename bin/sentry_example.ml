@@ -27,7 +27,8 @@ let send_exn =
   try
     failwith "Test exception!"
   with e ->
-    let%map event_id = Sentry.capture_exn sentry ~message:"test from OCaml" e in
+    let%map event_id = Sentry.capture_exception sentry
+                         ~message:"test from OCaml" e in
     printf !"Event created with event_id: %{sexp: string option}"
       (Option.map ~f:Uuidm.to_string event_id)
 
