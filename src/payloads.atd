@@ -16,12 +16,32 @@ type mechanism =
   (* TODO: meta *)
   ; ?data : (string * string) list nullable <json repr="object"> }
 
+type stackframe =
+  { ?filename : string nullable
+  ; ?function_ <json name="function"> : string nullable
+  ; ?module_ <json name="module"> : string nullable
+  ; ?lineno : int nullable
+  ; ?colno : int nullable
+  ; ?abs_path : string nullable
+  ; ?context_line : string nullable
+  ; ?pre_context : string list nullable
+  ; ?post_context : string list nullable
+  ; ?in_app : bool nullable
+  ; ?vars : (string * string) list nullable <json repr="object">
+  ; ?package : string nullable
+  ; ?platform : platform nullable
+  (* TODO: image_addr, instruction_addr, symbol_addr, instruction_offset *) }
+
+type stacktrace =
+  { frames : stackframe list }
+
 type exception_value =
   { type_ <json name="type"> : string
   ; value : string
   ; ?module_ <json name="module"> : string nullable
   ; ?thread_id : string nullable
-  ; ?mechanism : mechanism nullable }
+  ; ?mechanism : mechanism nullable
+  ; ?stacktrace : stacktrace nullable }
 
 type exception_ =
   { values : exception_value list }
