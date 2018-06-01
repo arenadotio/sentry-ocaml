@@ -127,11 +127,17 @@ let capture_event t event =
         (Cohttp.Code.code_of_status status) errors ()
 
 let capture_message t message =
+  let message = Event.Message.make ~message () in
   Event.make ~message ()
   |> capture_event t
 
 let capture_exception t ?message exn =
-  Event.make ?message ~exn ()
+  let exn = Event.Exception.of_exn exn in
+  let message =
+    Option.map message ~f:(fun message ->
+      Event.Message.make ~message ())
+  in
+  Event.make ?message ~exn:[ exn ] ()
   |> capture_event t
 
 let context t f =
