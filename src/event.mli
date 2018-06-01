@@ -1,7 +1,7 @@
 (** https://docs.sentry.io/clientdev/attributes/ *)
 open Core
 
-type t =
+type t = private
   { event_id : Uuidm.t
   ; timestamp : Time.t
   ; logger : string

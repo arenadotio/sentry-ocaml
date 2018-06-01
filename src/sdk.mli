@@ -1,7 +1,7 @@
 (** https://docs.sentry.io/clientdev/attributes/#required-attributes *)
 open Core
 
-type t =
+type t = private
   { name : string
   ; version: string
   ; integrations : String.Set.t }

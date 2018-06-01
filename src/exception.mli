@@ -2,7 +2,7 @@
 open Core
 
 module Mechanism : sig
-  type t =
+  type t = private
     { type_ : string
     ; description : string option
     ; help_link : string option
@@ -24,7 +24,7 @@ end
 
 module Frame : sig
   (** https://docs.sentry.io/clientdev/interfaces/stacktrace/ *)
-  type t =
+  type t = private
     { filename : string option
     ; function_ : string option
     ; module_ : string option
@@ -77,7 +77,7 @@ module Frame : sig
   val to_payload : t -> Payloads_t.stackframe
 end
 
-type t =
+type t = private
   { type_ : string
   ; value : string
   ; module_ : string option
