@@ -1,5 +1,5 @@
 open Core_kernel
-open Async
+open Async_kernel
 
 module Config = Config
 module Event = Event

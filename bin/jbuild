@@ -2,7 +2,7 @@
 
 (executables
  ((names (sentry_example))
-  (libraries (sentry))
+  (libraries (async sentry))
   (preprocess (pps (ppx_jane)))))
 
 (alias
