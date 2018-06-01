@@ -1,6 +1,13 @@
 open Core
 open Async
 
+module Config = Config
+module Event = Event
+module Exception = Exception
+module Platform = Platform
+module Sdk = Sdk
+module Severity_level = Severity_level
+
 type t' = private
   { uri : Uri.t
   ; public_key : string

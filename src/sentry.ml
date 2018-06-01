@@ -1,6 +1,13 @@
 open Core
 open Async
 
+module Config = Config
+module Event = Event
+module Exception = Exception
+module Platform = Platform
+module Sdk = Sdk
+module Severity_level = Severity_level
+
 type t' =
   { uri : Uri.t
   ; public_key : string
@@ -127,15 +134,15 @@ let capture_event t event =
         (Cohttp.Code.code_of_status status) errors ()
 
 let capture_message t message =
-  let message = Event.Message.make ~message () in
+  let message = Message.make ~message () in
   Event.make ~message ()
   |> capture_event t
 
 let capture_exception t ?message exn =
-  let exn = Event.Exception.of_exn exn in
+  let exn = Exception.of_exn exn in
   let message =
     Option.map message ~f:(fun message ->
-      Event.Message.make ~message ())
+      Message.make ~message ())
   in
   Event.make ?message ~exn:[ exn ] ()
   |> capture_event t
