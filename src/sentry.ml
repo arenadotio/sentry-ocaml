@@ -148,6 +148,14 @@ let capture_exception t ?message exn =
   |> capture_event t
 
 let context t f =
+  try
+    return (f ())
+  with e ->
+    capture_exception t e ~message:"new"
+    >>| fun _ ->
+    raise e
+
+let context_async t f =
   Monitor.try_with ~extract_exn:true
     ~rest:(`Call (fun e -> capture_exception t e |> ignore)) f
   >>= function

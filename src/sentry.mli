@@ -46,8 +46,12 @@ val capture_message : t -> string -> Uuidm.t option Deferred.t
     optional message and uploads it to Sentry. *)
 val capture_exception : t -> ?message:string -> exn -> Uuidm.t option Deferred.t
 
-(** [context t f] runs [f]. If [f] throws one or more exception, they will be
+(** [context t f] runs [f]. If [f] throws an exception, it will be
+    uploaded to Sentry and then re-reraised. *)
+val context : t -> (unit -> 'a) -> 'a Deferred.t
+
+(** [context_async t f] runs [f]. If [f] throws one or more exception, they will be
     uploaded to Sentry. The first raised exception willl be re-raised (multiple
     exceptions could be raised to the Async monitor but only one can be
     re-raised). *)
-val context : t -> (unit -> 'a Deferred.t) -> 'a Deferred.t
+val context_async : t -> (unit -> 'a Deferred.t) -> 'a Deferred.t
