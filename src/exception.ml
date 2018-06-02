@@ -106,8 +106,6 @@ let list_to_payload t =
   { Payloads_t.values }
 
 let of_exn exn =
-  let type_ = Caml.Printexc.exn_slot_name exn in
-  let value = Caml.Printexc.to_string exn in
   let stacktrace =
     Caml.Printexc.get_raw_backtrace ()
     |> Caml.Printexc.backtrace_slots
@@ -125,4 +123,6 @@ let of_exn exn =
        ~filename to Frame.make *)
     |> Or_error.ok_exn
   in
+  let type_ = Caml.Printexc.exn_slot_name exn in
+  let value = Caml.Printexc.to_string exn in
   make ~type_ ~value ~stacktrace ()

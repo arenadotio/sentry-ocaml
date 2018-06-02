@@ -151,7 +151,7 @@ let context t f =
   try
     return (f ())
   with e ->
-    capture_exception t e ~message:"new"
+    capture_exception t e
     >>| fun _ ->
     raise e
 
