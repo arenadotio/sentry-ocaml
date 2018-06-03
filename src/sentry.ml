@@ -8,8 +8,6 @@ module Platform = Platform
 module Sdk = Sdk
 module Severity_level = Severity_level
 
-external reraise : exn -> _ = "%reraise"
-
 type t' =
   { uri : Uri.t
   ; public_key : string
@@ -153,9 +151,10 @@ let context t f =
   try
     return (f ())
   with e ->
+    let backtrace = Caml.Printexc.get_raw_backtrace () in
     capture_exception t e
     >>| fun _ ->
-    raise e
+    Caml.Printexc.raise_with_backtrace e backtrace
 
 let context_async t f =
   Monitor.try_with ~extract_exn:false
@@ -163,6 +162,7 @@ let context_async t f =
   >>= function
   | Ok res -> return res
   | Error e ->
+    let backtrace = Caml.Printexc.get_raw_backtrace () in
     capture_exception t e
     >>| fun _ ->
-    reraise e
+    Caml.Printexc.raise_with_backtrace e backtrace
