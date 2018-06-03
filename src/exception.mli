@@ -100,3 +100,5 @@ val to_payload : t -> Payloads_t.exception_value
 val list_to_payload : t list -> Payloads_t.exception_
 
 val of_exn : exn -> t
+
+val of_error : Error.t -> t

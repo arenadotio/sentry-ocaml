@@ -147,17 +147,36 @@ let capture_exception t ?message exn =
   Event.make ?message ~exn:[ exn ] ()
   |> capture_event t
 
-let capture_and_reraise_exception t e =
-  let backtrace = Caml.Printexc.get_raw_backtrace () in
-  capture_exception t e
-  >>| fun _ ->
-  Caml.Printexc.raise_with_backtrace e backtrace
+let capture_error t err =
+  let exn = Exception.of_error err in
+  Event.make ~exn:[ exn ] ()
+  |> capture_event t
+
+let context' t f =
+  try
+    f ()
+  with e ->
+    let backtrace = Caml.Printexc.get_raw_backtrace () in
+    capture_exception t e
+    >>| fun _ ->
+    Caml.Printexc.raise_with_backtrace e backtrace
 
 let context t f =
-  try
-    return (f ())
-  with e ->
-    capture_and_reraise_exception t e
+  context' t (fun () ->
+    return (f ()))
+
+let capture_and_return_or_error t v =
+  match v with
+  | Ok _ -> return v
+  | Error e ->
+    capture_error t e
+    >>| fun _ ->
+    v
+
+let context_or_error t f =
+  context' t (fun () ->
+    f ()
+    |> capture_and_return_or_error t)
 
 let context_async t f =
   Monitor.try_with ~extract_exn:false
@@ -165,4 +184,12 @@ let context_async t f =
   >>= function
   | Ok res -> return res
   | Error e ->
-    capture_and_reraise_exception t e
+    let backtrace = Caml.Printexc.get_raw_backtrace () in
+    capture_exception t e
+    >>| fun _ ->
+    Caml.Printexc.raise_with_backtrace e backtrace
+
+let context_async_or_error t f =
+  context_async t (fun () ->
+    f ()
+    >>= capture_and_return_or_error t)

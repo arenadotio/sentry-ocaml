@@ -126,3 +126,22 @@ let of_exn exn =
   let type_ = Caml.Printexc.exn_slot_name exn in
   let value = Caml.Printexc.to_string exn in
   make ~type_ ~value ~stacktrace ()
+
+let of_error err =
+  let open Error.Internal_repr in
+  let rec find_backtrace = function
+    | With_backtrace (_, bt) -> Some bt
+    | Tag_t (_, t)
+    | Tag_arg (_, _, t) -> find_backtrace t
+    | Of_list (_, l) ->
+      List.find_map l ~f:find_backtrace
+    | _ -> None
+  in
+  match of_info err with
+  | Exn exn -> of_exn exn
+  | info ->
+    let _backtrace = find_backtrace info in
+    (* TODO: Parse backtrace *)
+    let type_ = "Error" in
+    let value = Error.to_string_hum err in
+    make ~type_ ~value ()
