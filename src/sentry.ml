@@ -8,6 +8,8 @@ module Platform = Platform
 module Sdk = Sdk
 module Severity_level = Severity_level
 
+external reraise : exn -> _ = "%reraise"
+
 type t' =
   { uri : Uri.t
   ; public_key : string
@@ -156,11 +158,11 @@ let context t f =
     raise e
 
 let context_async t f =
-  Monitor.try_with ~extract_exn:true
+  Monitor.try_with ~extract_exn:false
     ~rest:(`Call (fun e -> capture_exception t e |> ignore)) f
   >>= function
   | Ok res -> return res
   | Error e ->
     capture_exception t e
     >>| fun _ ->
-    raise e
+    reraise e
