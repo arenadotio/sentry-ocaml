@@ -1,6 +1,7 @@
 open Core_kernel
 open Async_kernel
 
+module Client = Client
 module Config = Config
 module Dsn = Dsn
 module Event = Event
