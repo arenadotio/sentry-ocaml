@@ -9,3 +9,7 @@ val empty_list_option : 'a list -> 'a list option
     resulting list is empty or [Some _] if it is not. This is useful for
     converting our maps to the types atdgen expects. *)
 val map_to_alist_option : ('key, 'value, _) Map.t -> ('key * 'value) list option
+
+(** [with_print_exn] runs [f] and prints the exception it throws [if
+    applicable]. This function is only for testing. *)
+val with_print_exn : (unit -> unit) -> unit

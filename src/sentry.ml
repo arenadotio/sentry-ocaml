@@ -3,29 +3,17 @@ open Async_kernel
 open Async_unix
 
 module Config = Config
+module Dsn = Dsn
 module Event = Event
 module Exception = Exception
 module Platform = Platform
 module Sdk = Sdk
 module Severity_level = Severity_level
 
-type t' =
-  { uri : Uri.t
-  ; public_key : string
-  ; private_key : string option
-  ; project_id : int
-  ; event_pipe : Event.t Pipe.Writer.t }
-[@@deriving sexp_of]
-
-type t = t' option [@@deriving sexp_of]
-
-let empty =
-  None
-
 let user_agent =
   sprintf "%s/%s" Config.name Config.version
 
-let to_auth_header { uri ; public_key ; private_key } time =
+let dsn_to_auth_header { Dsn.uri ; public_key ; private_key } time =
   let value =
     let base =
       sprintf "Sentry sentry_version=7, \
@@ -45,14 +33,10 @@ let to_auth_header { uri ; public_key ; private_key } time =
   in
   Cohttp.Header.init_with "X-Sentry-Auth" value
 
-let make_headers t timestamp =
-  to_auth_header t timestamp
+let make_headers ~dsn timestamp =
+  dsn_to_auth_header dsn timestamp
   |> Fn.flip Cohttp.Header.prepend_user_agent user_agent
   |> fun h -> Cohttp.Header.add h "Content-Type" "application/json"
-
-let make_uri { uri ; project_id } =
-  sprintf "/api/%d/store" project_id
-  |> Uri.with_path uri
 
 let rec send_request ~headers ~data uri =
   let body = Cohttp_async.Body.of_string data in
@@ -71,29 +55,30 @@ let rec send_request ~headers ~data uri =
   else
     return (response, body)
 
-let capture_event' t event =
-  let headers = make_headers t event.Event.timestamp in
-  let uri = make_uri t in
-  let data = Event.to_json_string event in
-  let%bind response, body = send_request ~headers ~data uri in
-  match Cohttp.Response.status response with
-  | `OK ->
-    Cohttp_async.Body.to_string body
-    >>| Payloads_j.response_of_string
-    >>| fun { Payloads_j.id } -> Some id
-  | status ->
-    let errors =
-      Cohttp.Response.headers response
-      |> Fn.flip Cohttp.Header.get "X-Sentry-Error"
-      |> Option.value ~default:"No X-Sentry-Error header"
-    in
-    failwithf "Unexpected %d response from Sentry: %s"
-      (Cohttp.Code.code_of_status status) errors ()
+let capture_event' ?(dsn=Dsn.default) event =
+  match dsn with
+  | None -> return None
+  | Some dsn ->
+    let headers = make_headers dsn event.Event.timestamp in
+    let uri = Dsn.event_store_uri dsn in
+    let data = Event.to_json_string event in
+    let%bind response, body = send_request ~headers ~data uri in
+    match Cohttp.Response.status response with
+    | `OK ->
+      Cohttp_async.Body.to_string body
+      >>| Payloads_j.response_of_string
+      >>| fun { Payloads_j.id } -> Some id
+    | status ->
+      let errors =
+        Cohttp.Response.headers response
+        |> Fn.flip Cohttp.Header.get "X-Sentry-Error"
+        |> Option.value ~default:"No X-Sentry-Error header"
+      in
+      failwithf "Unexpected %d response from Sentry: %s"
+        (Cohttp.Code.code_of_status status) errors ()
 
-let make ~uri ~public_key ?private_key ~project_id () =
+let event_pipe =
   let reader, writer = Pipe.create () in
-  let t = { uri ; public_key ; private_key ; project_id ; event_pipe = writer }
-  in
   (* Use a pipe to let us sent events asynchronously and still ensure that they're
      all written before the program exits *)
   let close p =
@@ -106,8 +91,8 @@ let make ~uri ~public_key ?private_key ~project_id () =
   in
   let consumer = Pipe.add_consumer reader
                    ~downstream_flushed:(Fn.const (return `Ok)) in
-  Pipe.iter ~consumer reader ~f:(fun event ->
-    capture_event' t event
+  Pipe.iter ~consumer reader ~f:(fun (dsn, event) ->
+    capture_event' ?dsn event
     >>| fun _ -> Pipe.Consumer.values_sent_downstream consumer)
   |> don't_wait_for;
   Shutdown.at_shutdown (fun () ->
@@ -116,114 +101,69 @@ let make ~uri ~public_key ?private_key ~project_id () =
     Pipe.downstream_flushed writer
     |> Deferred.ignore);
   Gc.add_finalizer_exn writer (Fn.compose don't_wait_for close);
-  Some t
+  writer
 
-let of_dsn_exn dsn =
-  if Uri.(dsn = empty) then
-    empty
-  else
-    let required =
-      [ "SCHEME", Uri.scheme dsn
-      ; "HOST", Uri.host dsn
-      ; "PUBLIC_KEY", Uri.user dsn
-      ; "PROJECT_ID",
-        Uri.path dsn
-        |> String.rsplit2 ~on:'/'
-        |> Option.map ~f:snd ]
-    in
-    List.filter_map required ~f:(fun (name, value) ->
-      match value with
-      | None -> Some name
-      | Some _ -> None)
-    |> function
-    | [] ->
-      begin match List.map required ~f:snd with
-      | [ Some scheme ; Some host ; Some public_key ; Some project_id ] ->
-        let private_key = Uri.password dsn in
-        let uri = Uri.make ~scheme ~host () in
-        begin try
-          let project_id = Int.of_string project_id in
-          make ~uri ~public_key ?private_key ~project_id ()
-        with _ ->
-          failwithf "Invalid PROJECT_ID: %s (should be an integer)"
-            project_id ()
-        end
-      | _ -> assert false
-      end
-    | missing ->
-      let fields = String.concat missing ~sep:"," in
-      failwithf "Missing required DSN field(s): %s" fields ()
+let capture_event ?dsn event =
+  Pipe.write_without_pushback_if_open event_pipe (dsn, event)
 
-let of_dsn dsn =
-  try
-    of_dsn_exn dsn
-  with e ->
-    None
-
-let capture_event t event =
-  match t with
-  | None -> ()
-  | Some { event_pipe } ->
-    Pipe.write_without_pushback_if_open event_pipe event
-
-let capture_message t message =
+let capture_message ?dsn message =
   let message = Message.make ~message () in
   Event.make ~message ()
-  |> capture_event t
+  |> capture_event ?dsn
 
-let capture_exception t ?message exn =
+let capture_exception ?dsn ?message exn =
   let exn = Exception.of_exn exn in
   let message =
     Option.map message ~f:(fun message ->
       Message.make ~message ())
   in
   Event.make ?message ~exn:[ exn ] ()
-  |> capture_event t
+  |> capture_event ?dsn
 
-let capture_error t err =
+let capture_error ?dsn err =
   let exn = Exception.of_error err in
   Event.make ~exn:[ exn ] ()
-  |> capture_event t
+  |> capture_event ?dsn
 
-let context t f =
+let context ?dsn f =
   try
     f ()
   with e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception t e;
+    capture_exception ?dsn e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
-let context_ignore t f =
+let context_ignore ?dsn f =
   try
     f ()
   with e ->
-    capture_exception t e
+    capture_exception ?dsn e
 
-let capture_and_return_or_error t v =
+let capture_and_return_or_error ?dsn v =
   match v with
   | Ok _ -> v
   | Error e ->
-    capture_error t e;
+    capture_error ?dsn e;
     v
 
-let context_or_error t f =
-  context t (fun () ->
+let context_or_error ?dsn f =
+  context ?dsn (fun () ->
     f ()
-    |> capture_and_return_or_error t)
+    |> capture_and_return_or_error ?dsn)
 
-let context_async t f =
-  Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception t)) f
+let context_async ?dsn f =
+  Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception ?dsn)) f
   >>= function
   | Ok res -> return res
   | Error e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception t e;
+    capture_exception ?dsn e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
-let context_async_ignore t f =
-  Monitor.handle_errors f (capture_exception t)
+let context_async_ignore ?dsn f =
+  Monitor.handle_errors f (capture_exception ?dsn)
 
-let context_async_or_error t f =
-  context_async t (fun () ->
+let context_async_or_error ?dsn f =
+  context_async ?dsn (fun () ->
     f ()
-    >>| capture_and_return_or_error t)
+    >>| capture_and_return_or_error ?dsn)
