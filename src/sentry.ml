@@ -92,7 +92,8 @@ let capture_exception ?message exn =
 
 let capture_error err =
   let exn = Exception.of_error err in
-  capture_event ~exn ()
+  let message = Message.make ~message:(Error.to_string_hum err) () in
+  capture_event ~message ~exn ()
 
 let context f =
   try
