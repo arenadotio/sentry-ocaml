@@ -145,3 +145,22 @@ let of_error err =
     let type_ = "Error" in
     let value = Error.to_string_hum err in
     make ~type_ ~value ()
+
+let%expect_test "parse exn to payload" =
+  begin try
+    raise (Failure "This is a test")
+  with e ->
+    of_exn e
+    |> to_payload
+    |> Payloads_j.string_of_exception_value
+    |> print_endline
+  end;
+  [%expect {| {"type":"Failure","value":"(Failure \"This is a test\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":151,"colno":4}]}} |}]
+
+let%expect_test "parse Error.t to payload" =
+  Error.of_string "This is different test"
+  |> of_error
+  |> to_payload
+  |> Payloads_j.string_of_exception_value
+  |> print_endline;
+  [%expect {|  {"type":"Error","value":"This is different test"} |}]
