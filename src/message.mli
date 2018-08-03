@@ -3,6 +3,7 @@ type t = private
   { message : string
   ; params : string list
   ; formatted : string }
+[@@deriving sexp_of]
 
 val make
   : message:string

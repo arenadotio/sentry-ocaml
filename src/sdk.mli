@@ -5,6 +5,7 @@ type t = private
   { name : string
   ; version: string
   ; integrations : String.Set.t }
+[@@deriving sexp_of]
 
 val make
   : name:string

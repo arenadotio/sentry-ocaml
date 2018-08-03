@@ -1,6 +1,8 @@
 open Core_kernel
 open Async
 
+(* Note: We currently require the Async scheduler to be running *)
+
 let send_message =
   let spec = Command.Spec.(
     empty
@@ -10,9 +12,9 @@ let send_message =
     Uri.of_string dsn
     |> Sentry.of_dsn_exn
   in
-  let%map event_id = Sentry.capture_message sentry "test from OCaml" in
-  printf !"Event created with event_id: %{sexp: string option}"
-    (Option.map ~f:Uuidm.to_string event_id)
+  Deferred.unit
+  >>| fun () ->
+  Sentry.capture_message sentry "test from OCaml"
 
 let send_error =
   let spec = Command.Spec.(
@@ -24,14 +26,14 @@ let send_error =
     Uri.of_string dsn
     |> Sentry.of_dsn_exn
   in
+  Deferred.unit
+  >>| fun () ->
   Or_error.try_with (fun () ->
     failwith "Test error!")
   |> function
   | Ok _ -> assert false
   | Error e ->
-    let%map event_id = Sentry.capture_error sentry e in
-    printf !"Event created with event_id: %{sexp: string option}"
-      (Option.map ~f:Uuidm.to_string event_id)
+    Sentry.capture_error sentry e
 
 let send_exn =
   let spec = Command.Spec.(
@@ -43,13 +45,12 @@ let send_exn =
     Uri.of_string dsn
     |> Sentry.of_dsn_exn
   in
+  Deferred.unit
+  >>| fun () ->
   try
     failwith "Test exception!"
   with e ->
-    let%map event_id = Sentry.capture_exception sentry
-                         ~message:"test from OCaml" e in
-    printf !"Event created with event_id: %{sexp: string option}"
-      (Option.map ~f:Uuidm.to_string event_id)
+    Sentry.capture_exception sentry ~message:"test from OCaml" e
 
 let send_exn_context =
   let spec = Command.Spec.(

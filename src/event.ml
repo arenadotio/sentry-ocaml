@@ -2,8 +2,8 @@ open Core_kernel
 open Util
 
 type t =
-  { event_id : Uuidm.t
-  ; timestamp : Time.t
+  { event_id : Uuidm.t sexp_opaque
+  ; timestamp : Time.t sexp_opaque
   ; logger : string
   ; platform : Platform.t
   ; sdk : Sdk.t
@@ -16,8 +16,9 @@ type t =
   ; modules : string String.Map.t
   ; extra : string String.Map.t
   ; fingerprint : string list option
-  ; exception_ : Exception.t list option
+  ; exception_ : Exception.t list option sexp_opaque
   ; message : Message.t option }
+[@@deriving sexp_of]
 
 let make ?event_id ?timestamp ?(logger="ocaml") ?(platform=`Other)
       ?(sdk=Sdk.default) ?level ?culprit ?server_name ?release

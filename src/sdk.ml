@@ -5,6 +5,7 @@ type t =
   { name : string
   ; version: string
   ; integrations : String.Set.t }
+[@@deriving sexp_of]
 
 let make ~name ~version ?(integrations=String.Set.empty) () =
   { name ; version ; integrations }

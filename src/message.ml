@@ -5,6 +5,7 @@ type t =
   { message : string
   ; params : string list
   ; formatted : string }
+[@@deriving sexp_of]
 
 let make ~message ?(params=[]) ?formatted () =
   let formatted = Option.value formatted ~default:message in

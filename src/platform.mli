@@ -15,6 +15,7 @@ type t =
   | `Php
   | `Python
   | `Ruby ]
+[@@deriving sexp_of]
 
 val wrap : string -> [> t]
 val unwrap : [< t] -> string

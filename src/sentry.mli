@@ -12,7 +12,8 @@ type t' = private
   { uri : Uri.t
   ; public_key : string
   ; private_key : string option
-  ; project_id : int }
+  ; project_id : int
+  ; event_pipe : Event.t Pipe.Writer.t }
 [@@deriving sexp_of]
 
 type t = t' option [@@deriving sexp_of]
@@ -40,30 +41,31 @@ val of_dsn : Uri.t -> t Or_error.t
 val of_dsn_exn : Uri.t -> t
 
 (** [capture_message t message] uploads a message to Sentry. *)
-val capture_message : t -> string -> Uuidm.t option Deferred.t
+val capture_message : t -> string -> unit
 
 (** [capture_exception t ?message e] records the backtrace from [e] and an
     optional message and uploads it to Sentry. *)
-val capture_exception : t -> ?message:string -> exn -> Uuidm.t option Deferred.t
+val capture_exception : t -> ?message:string -> exn -> unit
 
 (** [capture_error t ?message e] records the backtrace from [e] and uploads it
     to Sentry. *)
-val capture_error : t -> Error.t -> Uuidm.t option Deferred.t
+val capture_error : t -> Error.t -> unit
 
 (** [context t f] runs [f]. If [f] throws an exception, it will be
     uploaded to Sentry and then re-reraised. *)
-val context : t -> (unit -> 'a) -> 'a Deferred.t
+val context : t -> (unit -> 'a) -> 'a
 
 (** [context_ignore t f] is like [context] except exceptions will not be
     re-raised. Use this if you're using Sentry in a loop where you want to
     report on errors and then continue (like in an web server). *)
-val context_ignore : t -> (unit -> unit) -> unit Deferred.t
+val context_ignore : t -> (unit -> unit) -> unit
 
 (** [context_or_error t f] runs [f]. If [f] throws an exception or error, it
-    will be uploaded to Sentry and then re-raised or returned. *)
-val context_or_error : t -> (unit -> 'a Or_error.t) -> 'a Deferred.Or_error.t
+    will be uploaded to Sentry and then re-raised or returned. Note that
+    [Error.t] does not handle backtraces as well as exceptions. *)
+val context_or_error : t -> (unit -> 'a Or_error.t) -> 'a Or_error.t
 
-(** [context_async t f] runs [f]. If [f] throws one or more exception, they will be
+(** [context_async t f] runs [f]. If [f] throws one or more exceptions, they will be
     uploaded to Sentry. The first raised exception willl be re-raised (multiple
     exceptions could be raised to the Async monitor but only one can be
     re-raised). *)

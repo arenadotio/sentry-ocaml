@@ -18,6 +18,7 @@ type t = private
   ; fingerprint : string list option
   ; exception_ : Exception.t list option
   ; message : Message.t option }
+[@@deriving sexp_of]
 
 val make
   : ?event_id:Uuidm.t
