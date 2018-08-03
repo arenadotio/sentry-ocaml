@@ -68,7 +68,12 @@ let send_event_and_wait_exn ~dsn event =
 
 let send_event_and_wait ~dsn event =
   Monitor.try_with (fun () -> send_event_and_wait_exn ~dsn event)
-  >>| Result.ok
+  >>| function
+  | Ok id -> Some id
+  | Error e ->
+    Exn.to_string e
+    |> Log.Global.error "Failed to upload Sentry event: %s";
+    None
 
 let event_pipe =
   let reader, writer = Pipe.create () in
