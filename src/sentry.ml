@@ -11,20 +11,59 @@ module Platform = Platform
 module Sdk = Sdk
 module Severity_level = Severity_level
 
-let dsn_key = Univ_map.Key.create ~name:"dsn" [%sexp_of: Dsn.t]
-let environment_key = Univ_map.Key.create ~name:"environment" [%sexp_of: string]
+let make_key name sexp_of =
+  let name = "sentry_" ^ name in
+  Univ_map.Key.create ~name sexp_of
+
+let dsn_key = make_key "dsn" [%sexp_of: Dsn.t]
+let environment_key = make_key "environment" [%sexp_of: string]
+let release_key = make_key "release" [%sexp_of: string]
+let server_name_key = make_key "server_name" [%sexp_of: string]
+
+let env_environment = Sys.getenv "SENTRY_ENVIRONMENT"
+let env_release = Sys.getenv "SENTRY_RELEASE"
+let env_server_name = Sys.getenv "SENTRY_NAME"
 
 let with_config_item key value f =
   Scheduler.with_local key (Some value) ~f
 
 let with_dsn value f = with_config_item dsn_key value f
-
-let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
-
 let with_environment value f = with_config_item environment_key value f
+let with_release value f = with_config_item release_key value f
+let with_server_name value f = with_config_item server_name_key value f
+
+(* Is there a better way to write this function? *)
+let rec with_config ?dsn ?environment ?release ?server_name f =
+  match dsn with
+  | Some dsn ->
+    with_dsn dsn (fun () ->
+      with_config ?environment ?release ?server_name f)
+  | None ->
+    match environment with
+    | Some environment ->
+      with_environment environment (fun () ->
+        with_config ?release ?server_name f)
+    | None ->
+      match release with
+      | Some release ->
+        with_release release (fun () ->
+          with_config ?server_name f)
+      | None ->
+        match server_name with
+        | Some server_name ->
+          with_server_name server_name f
+        | None ->
+          f ()
 
 let find_config key default =
   Option.first_some (Scheduler.find_local key) default
+
+let make_event ?exn ?message () =
+  let environment = find_config environment_key env_environment in
+  let release = find_config release_key env_release  in
+  let server_name = find_config server_name_key env_server_name in
+  let exn = Option.map exn ~f:List.return in
+  Event.make ?exn ?message ?environment ?release ?server_name ()
 
 let capture_event ?exn ?message () =
   let dsn =
@@ -33,12 +72,7 @@ let capture_event ?exn ?message () =
   in
   match dsn with
   | Some dsn ->
-    let event =
-      let environment =
-        find_config environment_key default_environment in
-      let exn = Option.map exn ~f:List.return in
-      Event.make ?exn ?message ?environment ()
-    in
+    let event = make_event ?exn ?message () in
     Log.Global.info "Uploading sentry event %s" (Uuid.unwrap event.event_id);
     Client.send_event ~dsn event
   | _ ->
