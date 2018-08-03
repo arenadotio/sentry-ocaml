@@ -56,3 +56,32 @@ let to_payload { event_id ; timestamp ; logger ; platform ; sdk ; level
 let to_json_string t =
   to_payload t
   |> Payloads_j.string_of_event
+
+let%expect_test "to_json_string basic" =
+  let event_id = Uuid.wrap "bce345569e7548a384bac4512a9ad909" in
+  let timestamp = Time.of_string "2018-08-03T11:44:21.298019Z" in
+  make ~event_id ~timestamp ()
+  |> to_json_string
+  |> print_endline;
+  [%expect {| {"event_id":"bce345569e7548a384bac4512a9ad909","timestamp":"2018-08-03T11:44:21.298019","logger":"ocaml","platform":"other","sdk":{"name":"sentry-ocaml","version":"0.1"}} |}]
+
+let%expect_test "to_json_string everything" =
+  begin try
+    raise Caml.Not_found
+  with exn ->
+    let event_id = Uuid.wrap "ad2579b4f62f486498781636c1450148" in
+    let timestamp = Time.of_string "2014-12-23T22:44:21.2309Z" in
+    let message = Message.make ~message:"Testy test test" () in
+    make ~event_id ~timestamp ~logger:"test" ~platform:`Python
+      ~sdk:(Sdk.make ~name:"test-sdk" ~version:"10.5" ()) ~level:`Error
+      ~culprit:"the tests" ~server_name:"example.com" ~release:"5"
+      ~tags:([ "a", "b" ; "c", "d" ] |> String.Map.of_alist_exn)
+      ~environment:"dev"
+      ~modules:([ "ocaml", "4.02.1" ; "core", "v0.10" ] |> String.Map.of_alist_exn)
+      ~extra:([ "a thing", "value" ] |> String.Map.of_alist_exn)
+      ~fingerprint:["039432409" ; "asdf"]
+      ~message ~exn:[Exception.of_exn exn] ()
+    |> to_json_string
+    |> print_endline
+  end;
+  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":[["a","b"],["c","d"]],"environment":"dev","modules":[["core","v0.10"],["ocaml","4.02.1"]],"extra":[["a thing","value"]],"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Not_found","value":"Not_found","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":70,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]
