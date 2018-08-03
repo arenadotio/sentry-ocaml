@@ -12,24 +12,41 @@ module Sdk = Sdk
 module Severity_level = Severity_level
 
 let dsn_key = Univ_map.Key.create ~name:"dsn" [%sexp_of: Dsn.t]
+let environment_key = Univ_map.Key.create ~name:"environment" [%sexp_of: string]
 
-let with_dsn dsn f =
-  Scheduler.with_local dsn_key (Some dsn) ~f
+let with_config_item key value f =
+  Scheduler.with_local key (Some value) ~f
 
-let capture_event event =
+let with_dsn value f = with_config_item dsn_key value f
+
+let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
+
+let with_environment value f = with_config_item environment_key value f
+
+let find_config key default =
+  Option.first_some (Scheduler.find_local key) default
+
+let capture_event ?exn ?message () =
   let dsn =
     Scheduler.find_local dsn_key
     |> Option.value ~default:Dsn.default
   in
   match dsn with
   | Some dsn ->
+    let event =
+      let environment =
+        find_config environment_key default_environment in
+      let exn = Option.map exn ~f:List.return in
+      Event.make ?exn ?message ?environment ()
+    in
+    Log.Global.info "Uploading sentry event %s" (Uuid.unwrap event.event_id);
     Client.send_event ~dsn event
-  | _ -> ()
+  | _ ->
+    Log.Global.info "Not uploading Sentry event because no DSN is set"
 
 let capture_message message =
   let message = Message.make ~message () in
-  Event.make ~message ()
-  |> capture_event
+  capture_event ~message ()
 
 let capture_exception ?message exn =
   let exn = Exception.of_exn exn in
@@ -37,13 +54,11 @@ let capture_exception ?message exn =
     Option.map message ~f:(fun message ->
       Message.make ~message ())
   in
-  Event.make ?message ~exn:[ exn ] ()
-  |> capture_event
+  capture_event ?message ~exn ()
 
 let capture_error err =
   let exn = Exception.of_error err in
-  Event.make ~exn:[ exn ] ()
-  |> capture_event
+  capture_event ~exn ()
 
 let context f =
   try

@@ -69,7 +69,9 @@ let send_event_and_wait_exn ~dsn event =
 let send_event_and_wait ~dsn event =
   Monitor.try_with (fun () -> send_event_and_wait_exn ~dsn event)
   >>| function
-  | Ok id -> Some id
+  | Ok id ->
+    Log.Global.info "Successfully uploaded sentry event %s" (Uuid.unwrap event.event_id);
+    Some id
   | Error e ->
     Exn.to_string e
     |> Log.Global.error "Failed to upload Sentry event: %s";
@@ -97,7 +99,7 @@ let event_pipe =
     close writer
     >>= fun () ->
     Pipe.downstream_flushed writer
-    |> Deferred.ignore);
+    >>= fun _ -> Log.Global.flushed ());
   Gc.add_finalizer_exn writer (Fn.compose don't_wait_for close);
   writer
 
