@@ -2,7 +2,7 @@
 type t = private
   { message : string
   ; params : string list
-  ; formatted : string }
+  ; formatted : string option }
 [@@deriving sexp_of]
 
 val make

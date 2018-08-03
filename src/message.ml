@@ -4,11 +4,10 @@ open Util
 type t =
   { message : string
   ; params : string list
-  ; formatted : string }
+  ; formatted : string option }
 [@@deriving sexp_of]
 
 let make ~message ?(params=[]) ?formatted () =
-  let formatted = Option.value formatted ~default:message in
   { message ; params ; formatted }
 
 let to_payload { message ; params ; formatted } =
