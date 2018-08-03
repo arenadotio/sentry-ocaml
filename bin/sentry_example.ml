@@ -10,7 +10,8 @@ let send_message =
   Command.async_spec ~summary:"Sends a message to Sentry" spec @@ fun dsn () ->
   Deferred.unit
   >>| fun () ->
-  Sentry.capture_message ~dsn "test from OCaml"
+  Sentry.with_dsn dsn @@ fun () ->
+  Sentry.capture_message "test from OCaml"
 
 let send_error =
   let spec = Command.Spec.(
@@ -20,12 +21,13 @@ let send_error =
   fun dsn () ->
   Deferred.unit
   >>| fun () ->
+  Sentry.with_dsn dsn @@ fun () ->
   Or_error.try_with (fun () ->
     failwith "Test error!")
   |> function
   | Ok _ -> assert false
   | Error e ->
-    Sentry.capture_error ~dsn e
+    Sentry.capture_error e
 
 let send_exn =
   let spec = Command.Spec.(
@@ -35,10 +37,11 @@ let send_exn =
   fun dsn () ->
   Deferred.unit
   >>| fun () ->
+  Sentry.with_dsn dsn @@ fun () ->
   try
     failwith "Test exception!"
   with e ->
-    Sentry.capture_exception ~dsn ~message:"test from OCaml" e
+    Sentry.capture_exception ~message:"test from OCaml" e
 
 let send_exn_context =
   let spec = Command.Spec.(
@@ -46,7 +49,8 @@ let send_exn_context =
     +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
   Command.async_spec ~summary:"Sends an exception to Sentry using context" spec
   @@ fun dsn () ->
-  Sentry.context ~dsn (fun () ->
+  Sentry.with_dsn dsn @@ fun () ->
+  Sentry.context (fun () ->
     failwith "Test context!")
 
 let () =
