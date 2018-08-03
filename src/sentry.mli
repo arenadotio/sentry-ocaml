@@ -35,7 +35,7 @@ val empty : t
     ignored.
 
     See docs: https://docs.sentry.io/quickstart/#about-the-dsn *)
-val of_dsn : Uri.t -> t Or_error.t
+val of_dsn : Uri.t -> t
 
 (** Like [of_dsn] but raises an exception if the DSN is invalid. *)
 val of_dsn_exn : Uri.t -> t

@@ -118,9 +118,9 @@ let make ~uri ~public_key ?private_key ~project_id () =
   Gc.add_finalizer_exn writer (Fn.compose don't_wait_for close);
   Some t
 
-let of_dsn dsn =
+let of_dsn_exn dsn =
   if Uri.(dsn = empty) then
-    Ok empty
+    empty
   else
     let required =
       [ "SCHEME", Uri.scheme dsn
@@ -143,20 +143,22 @@ let of_dsn dsn =
         let uri = Uri.make ~scheme ~host () in
         begin try
           let project_id = Int.of_string project_id in
-          Ok (make ~uri ~public_key ?private_key ~project_id ())
+          make ~uri ~public_key ?private_key ~project_id ()
         with _ ->
-          Or_error.errorf "Invalid PROJECT_ID: %s (should be an integer)"
-            project_id
+          failwithf "Invalid PROJECT_ID: %s (should be an integer)"
+            project_id ()
         end
       | _ -> assert false
       end
     | missing ->
-      String.concat missing ~sep:","
-      |> Or_error.errorf "Missing required DSN field(s): %s"
+      let fields = String.concat missing ~sep:"," in
+      failwithf "Missing required DSN field(s): %s" fields ()
 
-let of_dsn_exn dsn =
-  of_dsn dsn
-  |> Or_error.ok_exn
+let of_dsn dsn =
+  try
+    of_dsn_exn dsn
+  with e ->
+    None
 
 let capture_event t event =
   match t with
