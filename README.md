@@ -43,6 +43,11 @@ uploaded to Sentry:
 
 ![Exception in Sentry](static/exception_in_sentry.png)
 
-Then the exception will be re-thrown so you program will exit and print the
+Then the exception will be re-thrown so your program will exit and print the
 backtrace to stderr as usual (if you want to continue after errors, wrap
-`Sentry.context` in another error handler).
+`Sentry.context` in another error handler or use `Sentry.context_ignore`).
+
+Note that `Sentry.context_or_error` exists (which handles both exceptions and
+`Or_error.t`), but using exceptions exclusively is recommended because they have
+backtraces (and wrapping exceptions in `Error.t` loses whatever backtrace did
+exist in most cases).

@@ -54,6 +54,11 @@ val capture_error : t -> Error.t -> Uuidm.t option Deferred.t
     uploaded to Sentry and then re-reraised. *)
 val context : t -> (unit -> 'a) -> 'a Deferred.t
 
+(** [context_ignore t f] is like [context] except exceptions will not be
+    re-raised. Use this if you're using Sentry in a loop where you want to
+    report on errors and then continue (like in an web server). *)
+val context_ignore : t -> (unit -> unit) -> unit Deferred.t
+
 (** [context_or_error t f] runs [f]. If [f] throws an exception or error, it
     will be uploaded to Sentry and then re-raised or returned. *)
 val context_or_error : t -> (unit -> 'a Or_error.t) -> 'a Deferred.Or_error.t
@@ -63,6 +68,9 @@ val context_or_error : t -> (unit -> 'a Or_error.t) -> 'a Deferred.Or_error.t
     exceptions could be raised to the Async monitor but only one can be
     re-raised). *)
 val context_async : t -> (unit -> 'a Deferred.t) -> 'a Deferred.t
+
+(** See [context_ignore] and [context_async] *)
+val context_async_ignore : t -> (unit -> unit Deferred.t) -> unit Deferred.t
 
 (** [context_async_or_error t f] runs [f]. If [f] throws an exception or returns
     an error, it will be uploaded to Sentry and then re-raised or returned. *)

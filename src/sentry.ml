@@ -165,6 +165,13 @@ let context t f =
   context' t (fun () ->
     return (f ()))
 
+let context_ignore t f =
+  try
+    return (f ())
+  with e ->
+    capture_exception t e
+    >>| ignore
+
 let capture_and_return_or_error t v =
   match v with
   | Ok _ -> return v
@@ -188,6 +195,9 @@ let context_async t f =
     capture_exception t e
     >>| fun _ ->
     Caml.Printexc.raise_with_backtrace e backtrace
+
+let context_async_ignore t f =
+  Monitor.handle_errors f (fun e -> capture_exception t e |> ignore)
 
 let context_async_or_error t f =
   context_async t (fun () ->
