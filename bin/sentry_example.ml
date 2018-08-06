@@ -4,63 +4,23 @@ open Async
 (* Note: We currently require the Async scheduler to be running *)
 
 let send_message =
-  let spec = Command.Spec.(
-    empty
-    +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
-  Command.async_spec ~summary:"Sends a message to Sentry" spec @@ fun dsn () ->
+  let spec = Command.Spec.empty in
+  Command.async_spec ~summary:"Sends a message to Sentry" spec @@ fun () ->
   Sentry.with_tags [ "subcommand", "send-message" ] @@ fun () ->
-  Deferred.unit
-  >>| fun () ->
-  Sentry.with_dsn dsn @@ fun () ->
   Sentry.capture_message "test from OCaml"
-
-let send_error =
-  let spec = Command.Spec.(
-    empty
-    +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
-  Command.async_spec ~summary:"Sends an Error.t to Sentry" spec @@
-  fun dsn () ->
-  Deferred.unit
-  >>| fun () ->
-  Sentry.with_dsn dsn @@ fun () ->
-  Sentry.with_tags [ "subcommand", "send-error" ] @@ fun () ->
-  Or_error.try_with (fun () ->
-    failwith "Test error!")
-  |> function
-  | Ok _ -> assert false
-  | Error e ->
-    Sentry.capture_error e
+  |> return
 
 let send_exn =
-  let spec = Command.Spec.(
-    empty
-    +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
-  Command.async_spec ~summary:"Sends an exception to Sentry" spec @@
-  fun dsn () ->
-  Deferred.unit
-  >>| fun () ->
-  Sentry.with_dsn dsn @@ fun () ->
+  let spec = Command.Spec.empty in
+  Command.async_spec ~summary:"Sends an exception to Sentry" spec
+  @@ fun () ->
   Sentry.with_tags [ "subcommand", "send-exn" ] @@ fun () ->
-  try
-    failwith "Test exception!"
-  with e ->
-    Sentry.capture_exception ~message:"test from OCaml" e
-
-let send_exn_context =
-  let spec = Command.Spec.(
-    empty
-    +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
-  Command.async_spec ~summary:"Sends an exception to Sentry using context" spec
-  @@ fun dsn () ->
-  Sentry.with_tags [ "subcommand", "send-exn-context" ] @@ fun () ->
-  Sentry.with_dsn dsn @@ fun () ->
-  Sentry.context (fun () ->
-    failwith "Test context!")
+  Sentry.context_ignore (fun () ->
+    failwith "Test exception!")
+  |> return
 
 let () =
   [ "send-message", send_message
-  ; "send-error", send_error
-  ; "send-exn", send_exn
-  ; "send-exn-context", send_exn_context ]
+  ; "send-exn", send_exn ]
   |> Command.group ~summary:"Test commands for Sentry"
   |> Command.run
