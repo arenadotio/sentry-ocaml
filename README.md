@@ -6,21 +6,14 @@
 This is an unofficial work-in-progress [Sentry](https://sentry.io) library for
 OCaml.
 
-It currently works reasonably well with non-async code (async backtraces are
-currently mostly-useless).
+**This currently requires the Async scheduler to be running or data will not
+be uploaded**
 
 ## Missing features:
 
- - Graceful error handling (currently exceptions thrown by Cohttp will be
-   re-thrown instead of logged). This is a violation of Sentry's SDK guidelines
-   and will be fixed (probably by adding a `~logger` argument).
- - No support for tags, user info, etc. Currently we only upload messages and
-   exceptions.
- - Global unhandled exception handler isn't implemented yet.
- - Probably other things
-
-Right now this library is Async-specific but Lwt and synchronous versions are
-planned.
+  - Only supports Async (pull requests to factor out Lwt/Unix are welcome!)
+  - Global unhandled exception handler isn't implemented yet.
+  - Probably other things
 
 ## Example
 
@@ -30,13 +23,15 @@ In general, you should use this like:
 
 ```
 let () =
-  let sentry =
-    Uri.of_string "https://[PUBLIC_KEY]@[HOST]/[PROJECT_ID]"
-    |> Sentry.of_dsn_exn
-  in
+  let spec = Command.Spec.(...) in
+  Command.async_spec ~summary:"..." spec
+  @@ fun args () ->
+  (* Using [SENTRY_DSN] from the environment *)
   Sentry.context @@ fun () ->
   (* your normal code here *)
 ```
+
+**To release the warning above: The Async schedule *must* be running.**
 
 This will execute your code as usual, and if it throws an exception, it will be
 uploaded to Sentry:
@@ -51,3 +46,34 @@ Note that `Sentry.context_or_error` exists (which handles both exceptions and
 `Or_error.t`), but using exceptions exclusively is recommended because they have
 backtraces (and wrapping exceptions in `Error.t` loses whatever backtrace did
 exist in most cases).
+
+## Tags
+
+We upload some data by default. From environment variables, we get:
+
+  - `SENTRY_ENVIRONMENT` -> `environment`
+  - `SENTRY_RELEASE` -> `release`
+
+From `Sys` or `Unix`:
+
+  - `Sys.argv` -> `argv`
+  - `Sys.backend_type` -> `backend_type`
+  - `Sys.executable_name` -> `executable_name`
+  - `Sys.gethostname` -> `server_name`
+  - `Sys.os_type` -> `os_type`
+
+You can override any of these with `Sentry.with_*` functions, i.e.
+`Sentry.with_environment`, `Sentry.with_release`, etc.
+
+You can also upload custom tags using either `Sentry.with_tags` or by passing
+`~tags` to a `capture` or `context` function. Tags will be merged for the
+current async job, so you only need to pass additional tags:
+
+```
+Sentry.context ~tags:[ "app_name", "http_server" ] @@ fun () ->
+...
+Sentry.with_tags [ "method", "GET", "path", "/example" ] @@ fun () ->
+...
+(* This will upload with default tags + app_name, method, path, and user_id *)
+Sentry.capture_message ~tags:[ "user_id", user_id ] "invalid login"
+```
