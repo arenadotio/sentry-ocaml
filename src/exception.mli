@@ -17,7 +17,7 @@ module Mechanism : sig
     -> ?handled:bool
     -> ?data:string String.Map.t
     -> unit
-    -> t 
+    -> t
 
   val to_payload : t -> Payloads_t.mechanism
 end
@@ -79,7 +79,7 @@ end
 
 type t = private
   { type_ : string
-  ; value : string
+  ; value : string option
   ; module_ : string option
   ; thread_id : string option
   ; mechanism : Mechanism.t option
@@ -87,7 +87,7 @@ type t = private
 
 val make
   : type_:string
-  -> value:string
+  -> ?value:string
   -> ?module_:string
   -> ?thread_id:string
   -> ?mechanism:Mechanism.t

@@ -67,7 +67,7 @@ let%expect_test "to_json_string basic" =
 
 let%expect_test "to_json_string everything" =
   begin try
-    raise Caml.Not_found
+    raise (Failure "test")
   with exn ->
     let event_id = Uuid.wrap "ad2579b4f62f486498781636c1450148" in
     let timestamp = Time.of_string "2014-12-23T22:44:21.2309Z" in
@@ -84,4 +84,4 @@ let%expect_test "to_json_string everything" =
     |> to_json_string
     |> print_endline
   end;
-  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":[["a","b"],["c","d"]],"environment":"dev","modules":[["core","v0.10"],["ocaml","4.02.1"]],"extra":[["a thing","value"]],"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Not_found","value":"Not_found","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":70,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]
+  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":[["a","b"],["c","d"]],"environment":"dev","modules":[["core","v0.10"],["ocaml","4.02.1"]],"extra":[["a thing","value"]],"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":70,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]

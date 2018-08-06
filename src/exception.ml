@@ -1,4 +1,5 @@
 open Core_kernel
+
 open Util
 
 module Mechanism = struct
@@ -82,13 +83,13 @@ end
 
 type t =
   { type_ : string
-  ; value : string
+  ; value : string option
   ; module_ : string option
   ; thread_id : string option
   ; mechanism : Mechanism.t option
   ; stacktrace : Frame.t list }
 
-let make ~type_ ~value ?module_ ?thread_id ?mechanism ?(stacktrace=[]) () =
+let make ~type_ ?value ?module_ ?thread_id ?mechanism ?(stacktrace=[]) () =
   { type_ ; value ; module_ ; thread_id ; mechanism ; stacktrace }
 
 let to_payload { type_ ; value ; module_ ; thread_id ; mechanism
@@ -125,9 +126,37 @@ let of_exn exn =
        ~filename to Frame.make *)
     |> Or_error.ok_exn
   in
-  let type_ = Caml.Printexc.exn_slot_name exn in
-  let value = Caml.Printexc.to_string exn in
-  make ~type_ ~value ~stacktrace ()
+  let type_ =
+    (* exn_slot_name prints something like Module__filename.Submodule.Exn_name,
+       but we only want Exn_name *)
+    Caml.Printexc.exn_slot_name exn
+    |> String.split ~on:'.'
+    |> List.last_exn
+  in
+  let value =
+    let str = Exn.to_string exn in
+    (* Try to extract nicer info from the string output *)
+    (* TODO: Handle non-sexp exceptions, which print like:
+       Sentry__Exception.Custom_no_sexp_exception("This is a test", _)
+    *)
+    try
+      Sexp.of_string str
+      |> function
+        (* Exceptions using [@@deriving sexp_of] will be in the form
+           (Exception_name "message" other args) *)
+      | Sexp.List (Atom name :: msgs)
+        when String.is_suffix ~suffix:type_ name ->
+        begin match msgs with
+        | [] -> None
+        | [ Atom msg ] -> Some msg
+        | sexp -> Sexp.to_string_hum (Sexp.List sexp) |> Option.some
+        end
+      (* Handles argumentless exceptions like Not_found *)
+      | Atom name when String.is_suffix ~suffix:type_ name -> None
+      | _ -> assert false
+    with _ -> Some str
+  in
+  make ~type_ ?value ~stacktrace ()
 
 let of_error err =
   let open Error.Internal_repr in
@@ -148,16 +177,35 @@ let of_error err =
     let value = Error.to_string_hum err in
     make ~type_ ~value ()
 
-let%expect_test "parse exn to payload" =
+let exn_test_helper e =
   begin try
-    raise (Failure "This is a test")
+    raise e
   with e ->
     of_exn e
     |> to_payload
     |> Payloads_j.string_of_exception_value
     |> print_endline
-  end;
-  [%expect {| {"type":"Failure","value":"(Failure \"This is a test\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":153,"colno":4}]}} |}]
+  end
+
+let%expect_test "parse exn to payload" =
+  exn_test_helper (Failure "This is a test");
+  [%expect {| {"type":"Failure","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+
+let%expect_test "parse Not_found to payload" =
+  exn_test_helper Caml.Not_found;
+  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+
+exception Custom_sexp_exception of string * int list [@@deriving sexp_of]
+
+let%expect_test "parse complex sexp exn to payload" =
+  exn_test_helper (Custom_sexp_exception ("This is a test", [ 4 ; 2 ]));
+  [%expect {| {"type":"Custom_sexp_exception","value":"(\"This is a test\" (4 2))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+
+exception Custom_no_sexp_exception of string * int list
+
+let%expect_test "parse complex no-sexp exn to payload" =
+  exn_test_helper (Custom_no_sexp_exception ("This is a test", [ 4 ; 2 ]));
+  [%expect {| {"type":"Custom_no_sexp_exception","value":"(\"Sentry__Exception.Custom_no_sexp_exception(\\\"This is a test\\\", _)\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
 
 let%expect_test "parse Error.t to payload" =
   Error.of_string "This is different test"

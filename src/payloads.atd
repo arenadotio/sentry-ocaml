@@ -37,7 +37,7 @@ type stacktrace =
 
 type exception_value =
   { type_ <json name="type"> : string
-  ; value : string
+  ; ?value : string nullable
   ; ?module_ <json name="module"> : string nullable
   ; ?thread_id : string nullable
   ; ?mechanism : mechanism nullable
