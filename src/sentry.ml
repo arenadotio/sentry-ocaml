@@ -20,9 +20,12 @@ let environment_key = make_key "environment" [%sexp_of: string]
 let release_key = make_key "release" [%sexp_of: string]
 let server_name_key = make_key "server_name" [%sexp_of: string]
 
-let env_environment = Sys.getenv "SENTRY_ENVIRONMENT"
-let env_release = Sys.getenv "SENTRY_RELEASE"
-let env_server_name = Sys.getenv "SENTRY_NAME"
+let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
+let default_release = Sys.getenv "SENTRY_RELEASE"
+let default_server_name =
+  match Sys.getenv "SENTRY_NAME" with
+  | None -> Some (Unix.gethostname ())
+  | value -> value
 
 let with_config_item key value f =
   Scheduler.with_local key (Some value) ~f
@@ -59,9 +62,9 @@ let find_config key default =
   Option.first_some (Scheduler.find_local key) default
 
 let make_event ?exn ?message () =
-  let environment = find_config environment_key env_environment in
-  let release = find_config release_key env_release  in
-  let server_name = find_config server_name_key env_server_name in
+  let environment = find_config environment_key default_environment in
+  let release = find_config release_key default_release  in
+  let server_name = find_config server_name_key default_server_name in
   let exn = Option.map exn ~f:List.return in
   Event.make ?exn ?message ?environment ?release ?server_name ()
 
