@@ -123,7 +123,8 @@ let%test_unit "tag merging" =
   find_tag ()
   |> [%test_result: string option] ~expect:(Some "first")
 
-let make_event ?exn ?message () =
+let make_event ?(tags=[]) ?exn ?message () =
+  with_tags tags @@ fun () ->
   let environment = find_environment () in
   let release = find_release () in
   let server_name = find_server_name () in
@@ -131,75 +132,75 @@ let make_event ?exn ?message () =
   let exn = Option.map exn ~f:List.return in
   Event.make ?exn ?message ?environment ?release ?server_name ?tags ()
 
-let capture_event ?exn ?message () =
+let capture_event ?tags ?exn ?message () =
   let dsn =
     Scheduler.find_local dsn_key
     |> Option.value ~default:Dsn.default
   in
   match dsn with
   | Some dsn ->
-    let event = make_event ?exn ?message () in
+    let event = make_event ?tags ?exn ?message () in
     Log.Global.info "Uploading sentry event %s" (Uuid.unwrap event.event_id);
     Client.send_event ~dsn event
   | _ ->
     Log.Global.info "Not uploading Sentry event because no DSN is set"
 
-let capture_message message =
+let capture_message ?tags message =
   let message = Message.make ~message () in
-  capture_event ~message ()
+  capture_event ?tags ~message ()
 
-let capture_exception ?message exn =
+let capture_exception ?tags ?message exn =
   let exn = Exception.of_exn exn in
   let message =
     Option.map message ~f:(fun message ->
       Message.make ~message ())
   in
-  capture_event ?message ~exn ()
+  capture_event ?tags ?message ~exn ()
 
-let capture_error err =
+let capture_error ?tags err =
   let exn = Exception.of_error err in
   let message = Message.make ~message:(Error.to_string_hum err) () in
-  capture_event ~message ~exn ()
+  capture_event ?tags ~message ~exn ()
 
-let context f =
+let context ?tags f =
   try
     f ()
   with e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception e;
+    capture_exception ?tags e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
-let context_ignore f =
+let context_ignore ?tags f =
   try
     f ()
   with e ->
-    capture_exception e
+    capture_exception ?tags e
 
-let capture_and_return_or_error v =
+let capture_and_return_or_error ?tags v =
   match v with
   | Ok _ -> v
   | Error e ->
-    capture_error e;
+    capture_error ?tags e;
     v
 
-let context_or_error f =
+let context_or_error ?tags f =
   context (fun () ->
     f ()
-    |> capture_and_return_or_error)
+    |> capture_and_return_or_error ?tags)
 
-let context_async f =
-  Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception)) f
+let context_async ?tags f =
+  Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception ?tags)) f
   >>= function
   | Ok res -> return res
   | Error e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception e;
+    capture_exception ?tags e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
-let context_async_ignore f =
-  Monitor.handle_errors f (capture_exception)
+let context_async_ignore ?tags f =
+  Monitor.handle_errors f (capture_exception ?tags)
 
-let context_async_or_error f =
+let context_async_or_error ?tags f =
   context_async (fun () ->
     f ()
-    >>| capture_and_return_or_error)
+    >>| capture_and_return_or_error ?tags)
