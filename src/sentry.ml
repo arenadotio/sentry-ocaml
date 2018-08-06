@@ -19,6 +19,7 @@ let dsn_key = make_key "dsn" [%sexp_of: Dsn.t]
 let environment_key = make_key "environment" [%sexp_of: string]
 let release_key = make_key "release" [%sexp_of: string]
 let server_name_key = make_key "server_name" [%sexp_of: string]
+let tags_key = make_key "tags" [%sexp_of: string String.Map.t]
 
 let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
 let default_release = Sys.getenv "SENTRY_RELEASE"
@@ -26,6 +27,7 @@ let default_server_name =
   match Sys.getenv "SENTRY_NAME" with
   | None -> Some (Unix.gethostname ())
   | value -> value
+let default_tags = None
 
 let with_config_item key value f =
   Scheduler.with_local key (Some value) ~f
@@ -35,8 +37,22 @@ let with_environment value f = with_config_item environment_key value f
 let with_release value f = with_config_item release_key value f
 let with_server_name value f = with_config_item server_name_key value f
 
+let with_tags tags f =
+  let tags = String.Map.of_alist_reduce tags ~f:(fun a b ->
+    if String.(a <> b) then
+      Log.Global.error "Duplicate tags: %s and %s. Ignoring %s." a b b;
+    a) in
+  (* Merge with existing tags *)
+  let value =
+    Scheduler.find_local tags_key
+    |> Option.value_map ~default:tags ~f:(fun existing_tags ->
+      Map.merge_skewed tags existing_tags ~combine:(fun ~key:_ new_tag _ ->
+        new_tag))
+  in
+  with_config_item tags_key value f
+
 (* Is there a better way to write this function? *)
-let rec with_config ?dsn ?environment ?release ?server_name f =
+let rec with_config ?dsn ?environment ?release ?server_name ?tags f =
   match dsn with
   | Some dsn ->
     with_dsn dsn (fun () ->
@@ -56,17 +72,50 @@ let rec with_config ?dsn ?environment ?release ?server_name f =
         | Some server_name ->
           with_server_name server_name f
         | None ->
-          f ()
+          match tags with
+          | Some tags ->
+            with_tags tags f
+          | None ->
+            f ()
 
 let find_config key default =
   Option.first_some (Scheduler.find_local key) default
 
+let find_environment () = find_config environment_key default_environment
+let find_release () = find_config release_key default_release
+let find_server_name () = find_config server_name_key default_server_name
+let find_tags () =
+  match Scheduler.find_local tags_key, default_tags with
+  | None, default -> default
+  | (Some _) as tags, None -> tags
+  | Some tags, Some default ->
+    Map.merge_skewed tags default ~combine:(fun ~key:_ new_tag _ ->
+      new_tag)
+    |> Option.some
+
+let%test_unit "tag merging" =
+  let find_tag () =
+    find_tags ()
+    |> Option.value_exn
+    |> Fn.flip Map.find "test"
+  in
+  with_tags [ "test", "first" ] @@ fun () ->
+  find_tag ()
+  |> [%test_result: string option] ~expect:(Some "first");
+  with_tags [ "test", "second" ] begin fun () ->
+    find_tag ()
+    |> [%test_result: string option] ~expect:(Some "second")
+  end;
+  find_tag ()
+  |> [%test_result: string option] ~expect:(Some "first")
+
 let make_event ?exn ?message () =
-  let environment = find_config environment_key default_environment in
-  let release = find_config release_key default_release  in
-  let server_name = find_config server_name_key default_server_name in
+  let environment = find_environment () in
+  let release = find_release () in
+  let server_name = find_server_name () in
+  let tags = find_tags () in
   let exn = Option.map exn ~f:List.return in
-  Event.make ?exn ?message ?environment ?release ?server_name ()
+  Event.make ?exn ?message ?environment ?release ?server_name ?tags ()
 
 let capture_event ?exn ?message () =
   let dsn =

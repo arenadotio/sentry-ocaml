@@ -8,6 +8,7 @@ let send_message =
     empty
     +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
   Command.async_spec ~summary:"Sends a message to Sentry" spec @@ fun dsn () ->
+  Sentry.with_tags [ "subcommand", "send-message" ] @@ fun () ->
   Deferred.unit
   >>| fun () ->
   Sentry.with_dsn dsn @@ fun () ->
@@ -22,6 +23,7 @@ let send_error =
   Deferred.unit
   >>| fun () ->
   Sentry.with_dsn dsn @@ fun () ->
+  Sentry.with_tags [ "subcommand", "send-error" ] @@ fun () ->
   Or_error.try_with (fun () ->
     failwith "Test error!")
   |> function
@@ -38,6 +40,7 @@ let send_exn =
   Deferred.unit
   >>| fun () ->
   Sentry.with_dsn dsn @@ fun () ->
+  Sentry.with_tags [ "subcommand", "send-exn" ] @@ fun () ->
   try
     failwith "Test exception!"
   with e ->
@@ -49,6 +52,7 @@ let send_exn_context =
     +> anon ("dsn" %: Sentry.Dsn.arg_exn)) in
   Command.async_spec ~summary:"Sends an exception to Sentry using context" spec
   @@ fun dsn () ->
+  Sentry.with_tags [ "subcommand", "send-exn-context" ] @@ fun () ->
   Sentry.with_dsn dsn @@ fun () ->
   Sentry.context (fun () ->
     failwith "Test context!")

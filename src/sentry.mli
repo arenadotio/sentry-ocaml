@@ -10,9 +10,36 @@ module Platform = Platform
 module Sdk = Sdk
 module Severity_level = Severity_level
 
-(** [with_dsn dsn f] overrides the default DSN (from environment vars) within
-    the execution of [f] *)
+(** [with_dsn dsn f] overrides the default DSN (from the environment variable
+    [SENTRY_DSN]) within the execution of [f] *)
 val with_dsn : Dsn.t -> (unit -> 'a) -> 'a
+
+(** [with_environment dsn f] overrides the default environment tag (from
+    the environment variable [SENTRY_ENVIRONMENT]) within the execution of [f]
+*)
+val with_environment : string -> (unit -> 'a) -> 'a
+
+(** [with_release dsn f] overrides the default release tag (from the environment
+    variable [SENTRY_RELEASE]) within the execution of [f] *)
+val with_release : string -> (unit -> 'a) -> 'a
+
+(** [with_server_name dsn f] overrides the default server name (default: lookup
+    host name) within the execution of [f] *)
+val with_server_name : string -> (unit -> 'a) -> 'a
+
+(** [with_tags tags f] merges the given tags with the default tags within the
+    execution of [f] *)
+val with_tags : (string * string) list -> (unit -> 'a) -> 'a
+
+(** Helper for calling multiple of the [with_*] functions above at once *)
+val with_config
+  : ?dsn:Dsn.t
+  -> ?environment:string
+  -> ?release:string
+  -> ?server_name:string
+  -> ?tags:(string * string) list
+  -> (unit -> 'a)
+  -> 'a
 
 (** [capture_message ?dsn message] uploads a message to Sentry using the given
     [dsn] (or looking it up in the environment). *)
