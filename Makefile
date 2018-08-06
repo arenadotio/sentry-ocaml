@@ -12,6 +12,9 @@ coverage: clean
 	@bisect-ppx-report -I _build/default/ -html _coverage/ \
 	  `find . -name 'bisect*.out'`
 
+install: build
+	@jbuilder install
+
 test:
 	@jbuilder runtest --force
 
