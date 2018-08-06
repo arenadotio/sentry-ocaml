@@ -23,11 +23,25 @@ let tags_key = make_key "tags" [%sexp_of: string String.Map.t]
 
 let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
 let default_release = Sys.getenv "SENTRY_RELEASE"
+
 let default_server_name =
   match Sys.getenv "SENTRY_NAME" with
   | None -> Some (Unix.gethostname ())
   | value -> value
-let default_tags = None
+
+let default_tags =
+  (* TODO: Add system username (Unix.getlogin) and cwd (Sys.getcwd). We need to
+     handle Deferred in here for that to work *)
+  [ "os_type", Sys.os_type
+  ; "executable_name", Sys.executable_name
+  (* TODO: Include this as JSON once #5 is done *)
+  ; "argv", Sys.argv |> Array.to_list |> String.concat ~sep:" "
+  ; "backend_type", (match Caml.Sys.backend_type with
+      | Caml.Sys.Native -> "Native"
+      | Bytecode -> "Bytecode"
+      | Other o -> o) ]
+  |> String.Map.of_alist_exn
+  |> Option.some
 
 let with_config_item key value f =
   Scheduler.with_local key (Some value) ~f
