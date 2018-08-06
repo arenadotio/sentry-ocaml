@@ -111,6 +111,8 @@ let of_exn exn =
     |> Caml.Printexc.backtrace_slots
     |> Option.value ~default:[||]
     |> Array.to_list
+    (* Frames should be sorted from oldest to newest. *)
+    |> List.rev
     |> List.filter_map ~f:(fun frame ->
       match Caml.Printexc.Slot.location frame with
       | None -> None
@@ -155,7 +157,7 @@ let%expect_test "parse exn to payload" =
     |> Payloads_j.string_of_exception_value
     |> print_endline
   end;
-  [%expect {| {"type":"Failure","value":"(Failure \"This is a test\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":151,"colno":4}]}} |}]
+  [%expect {| {"type":"Failure","value":"(Failure \"This is a test\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":153,"colno":4}]}} |}]
 
 let%expect_test "parse Error.t to payload" =
   Error.of_string "This is different test"
