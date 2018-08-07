@@ -1,5 +1,8 @@
 [![CircleCI](https://circleci.com/gh/brendanlong/sentry-ocaml.svg?style=shield)](https://circleci.com/gh/brendanlong/sentry-ocaml)
 [![Coverage Status](https://coveralls.io/repos/github/brendanlong/sentry-ocaml/badge.svg?branch=master)](https://coveralls.io/github/brendanlong/sentry-ocaml?branch=master)
+[![GitHub release](https://img.shields.io/github/release/brendanlong/sentry-ocaml.svg)](https://github.com/brendanlong/sentry-ocaml/releases/latest)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
+
 
 # Sentry (OCaml) - WORK IN PROGRESS
 
