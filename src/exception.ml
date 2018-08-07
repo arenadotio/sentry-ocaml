@@ -198,7 +198,12 @@ let exn_test_helper e =
   begin try
     raise e
   with e ->
-    of_exn e
+    let e = of_exn e in
+    { e with
+      stacktrace = List.map e.stacktrace ~f:(fun frame ->
+        { frame with
+          Frame.lineno = Some 192
+        ; colno = Some 4 }) }
     |> to_payload
     |> Payloads_j.string_of_exception_value
     |> print_endline
@@ -206,35 +211,35 @@ let exn_test_helper e =
 
 let%expect_test "parse exn to payload" =
   exn_test_helper (Failure "This is a test");
-  [%expect {| {"type":"Failure","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Failure","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 let%expect_test "parse Not_found to payload" =
   exn_test_helper Caml.Not_found;
-  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 exception Custom_sexp_exception of string * int list [@@deriving sexp_of]
 
 let%expect_test "parse complex sexp exn to payload" =
   exn_test_helper (Custom_sexp_exception ("This is a test", [ 4 ; 2 ]));
-  [%expect {| {"type":"Custom_sexp_exception","value":"(\"This is a test\" (4 2))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_sexp_exception","value":"(\"This is a test\" (4 2))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 exception Custom_no_sexp_exception of string * int list
 
 let%expect_test "parse complex no-sexp exn to payload" =
   exn_test_helper (Custom_no_sexp_exception ("This is a test", [ 4 ; 2 ]));
-  [%expect {| {"type":"Custom_no_sexp_exception","value":"(\"This is a test\" _)","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_no_sexp_exception","value":"(\"This is a test\" _)","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 exception Custom_no_sexp_single_arg_exception of string
 
 let%expect_test "parse single arg no-sexp exn to payload" =
   exn_test_helper (Custom_no_sexp_single_arg_exception ("This is a test"));
-  [%expect {| {"type":"Custom_no_sexp_single_arg_exception","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_no_sexp_single_arg_exception","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 exception Custom_no_sexp_no_arg_exception
 
 let%expect_test "parse no arg no-sexp exn to payload" =
   exn_test_helper Custom_no_sexp_no_arg_exception;
-  [%expect {| {"type":"Custom_no_sexp_no_arg_exception","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_no_sexp_no_arg_exception","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 let%expect_test "parse Error.t to payload" =
   Error.of_string "This is different test"
