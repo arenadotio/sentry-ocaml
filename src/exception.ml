@@ -134,13 +134,27 @@ let of_exn exn =
     |> List.last_exn
   in
   let value =
-    let str = Exn.to_string exn in
+    let str = Caml.Printexc.to_string exn in
     (* Try to extract nicer info from the string output *)
-    (* TODO: Handle non-sexp exceptions, which print like:
-       Sentry__Exception.Custom_no_sexp_exception("This is a test", _)
-    *)
     try
-      Sexp.of_string str
+      begin try
+        Sexp.of_string str
+      with _ ->
+        (* Try to parse the default format: Exception_name(arg1, arg2) *)
+        String.chop_suffix_exn str ~suffix:")"
+        |> String.split ~on:'('
+        |> function
+        | name :: args ->
+          let args =
+            String.concat ~sep:"" args
+            |> String.split ~on:','
+            |> List.map ~f:(fun arg ->
+              Sexp.of_string arg)
+          in
+          Atom name :: args
+          |> Sexp.List
+        | _ -> assert false
+      end
       |> function
         (* Exceptions using [@@deriving sexp_of] will be in the form
            (Exception_name "message" other args) *)
@@ -153,8 +167,11 @@ let of_exn exn =
         end
       (* Handles argumentless exceptions like Not_found *)
       | Atom name when String.is_suffix ~suffix:type_ name -> None
-      | _ -> assert false
-    with _ -> Some str
+      | sexp ->
+        Sexp.to_string_hum sexp
+        |> Option.some
+    with _ ->
+      Some str
   in
   make ~type_ ?value ~stacktrace ()
 
@@ -189,23 +206,35 @@ let exn_test_helper e =
 
 let%expect_test "parse exn to payload" =
   exn_test_helper (Failure "This is a test");
-  [%expect {| {"type":"Failure","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+  [%expect {| {"type":"Failure","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
 
 let%expect_test "parse Not_found to payload" =
   exn_test_helper Caml.Not_found;
-  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
 
 exception Custom_sexp_exception of string * int list [@@deriving sexp_of]
 
 let%expect_test "parse complex sexp exn to payload" =
   exn_test_helper (Custom_sexp_exception ("This is a test", [ 4 ; 2 ]));
-  [%expect {| {"type":"Custom_sexp_exception","value":"(\"This is a test\" (4 2))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_sexp_exception","value":"(\"This is a test\" (4 2))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
 
 exception Custom_no_sexp_exception of string * int list
 
 let%expect_test "parse complex no-sexp exn to payload" =
   exn_test_helper (Custom_no_sexp_exception ("This is a test", [ 4 ; 2 ]));
-  [%expect {| {"type":"Custom_no_sexp_exception","value":"(\"Sentry__Exception.Custom_no_sexp_exception(\\\"This is a test\\\", _)\")","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":182,"colno":4}]}} |}]
+  [%expect {| {"type":"Custom_no_sexp_exception","value":"(\"This is a test\" _)","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+
+exception Custom_no_sexp_single_arg_exception of string
+
+let%expect_test "parse single arg no-sexp exn to payload" =
+  exn_test_helper (Custom_no_sexp_single_arg_exception ("This is a test"));
+  [%expect {| {"type":"Custom_no_sexp_single_arg_exception","value":"This is a test","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
+
+exception Custom_no_sexp_no_arg_exception
+
+let%expect_test "parse no arg no-sexp exn to payload" =
+  exn_test_helper Custom_no_sexp_no_arg_exception;
+  [%expect {| {"type":"Custom_no_sexp_no_arg_exception","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":199,"colno":4}]}} |}]
 
 let%expect_test "parse Error.t to payload" =
   Error.of_string "This is different test"
