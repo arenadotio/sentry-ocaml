@@ -189,7 +189,7 @@ let context_or_error ?tags f =
     |> capture_and_return_or_error ?tags)
 
 let context_async ?tags f =
-  Monitor.try_with ~extract_exn:true ~rest:(`Call (capture_exception ?tags)) f
+  Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception ?tags)) f
   >>= function
   | Ok res -> return res
   | Error e ->

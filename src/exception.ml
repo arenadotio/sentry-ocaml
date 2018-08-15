@@ -1,4 +1,5 @@
 open Core_kernel
+open Async
 
 open Util
 
@@ -106,6 +107,8 @@ let list_to_payload t =
   let values = List.map t ~f:to_payload in
   { Payloads_t.values }
 
+let backtrace_regex = Re2.create_exn {|(Raised at|Called from) file "([^"]*)", line ([0-9]+), characters ([0-9]+)-[0-9]+|}
+
 let of_exn exn =
   let stacktrace =
     Caml.Printexc.get_raw_backtrace ()
@@ -126,15 +129,18 @@ let of_exn exn =
        ~filename to Frame.make *)
     |> Or_error.ok_exn
   in
+  (* Extract the inner exception for messages and stack trace when dealing
+     with async *)
+  let base_exn = Monitor.extract_exn exn in
   let type_ =
     (* exn_slot_name prints something like Module__filename.Submodule.Exn_name,
        but we only want Exn_name *)
-    Caml.Printexc.exn_slot_name exn
+    Caml.Printexc.exn_slot_name base_exn
     |> String.split ~on:'.'
     |> List.last_exn
   in
   let value =
-    let str = Caml.Printexc.to_string exn in
+    let str = Caml.Printexc.to_string base_exn in
     (* Try to extract nicer info from the string output *)
     try
       begin try
@@ -172,6 +178,44 @@ let of_exn exn =
         |> Option.some
     with _ ->
       Some str
+  in
+  (* Combine the stack trace from the Monitor exn if applicable *)
+  let stacktrace, value =
+    if base_exn = exn then
+      stacktrace, value
+    else
+      let monitor_trace =
+        let open Sexp in
+        Exn.sexp_of_t exn
+        |> function
+        | List [ Atom "monitor.ml.Error" ; _base_exn ; List monitor_stacktrace ] ->
+          List.filter_map monitor_stacktrace ~f:(function
+            | Atom frame ->
+              begin
+                Re2.find_submatches backtrace_regex frame
+                |> function
+                | Ok [| _ ; _ ; Some filename ; Some lineno ; Some colno |] ->
+                  begin try
+                    let lineno = Int.of_string lineno
+                    and colno = Int.of_string colno in
+                    Frame.make_exn ~filename ~lineno ~colno ()
+                    |> Option.some
+                  with _ ->
+                    None
+                  end
+                | _ -> None
+              end
+            | _ -> None)
+        | _ -> []
+      in
+      match monitor_trace with
+      | [] ->
+        stacktrace,
+        List.filter_opt [ value ; Some (Exn.to_string exn) ]
+        |> String.concat ~sep:"\n\n"
+        |> Option.some
+      | monitor_trace ->
+        stacktrace @ monitor_trace, value
   in
   make ~type_ ?value ~stacktrace ()
 
@@ -248,3 +292,27 @@ let%expect_test "parse Error.t to payload" =
   |> Payloads_j.string_of_exception_value
   |> print_endline;
   [%expect {|  {"type":"Error","value":"This is different test"} |}]
+
+let%expect_test "parse Async Monitor exception" =
+  Backtrace.elide := false;
+  Monitor.try_with ~extract_exn:false (fun () ->
+    raise Caml.Not_found)
+  >>= fun res ->
+  begin match res with
+  | Ok () -> assert false
+  | Error exn ->
+    exn_test_helper exn
+  end;
+  [%expect {| {"type":"Not_found","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4},{"filename":"src/exception.ml","lineno":192,"colno":4},{"filename":"src/monitor.ml","lineno":192,"colno":4},{"filename":"src/job_queue.ml","lineno":192,"colno":4}]}} |}]
+
+let%expect_test "parse Async Monitor exception parse failure" =
+  Backtrace.elide := true;
+  Monitor.try_with ~extract_exn:false (fun () ->
+    raise Caml.Not_found)
+  >>= fun res ->
+  begin match res with
+  | Ok () -> assert false
+  | Error exn ->
+    exn_test_helper exn
+  end;
+  [%expect {| {"type":"Not_found","value":"(monitor.ml.Error Not_found (\"<backtrace elided in test>\"))","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
