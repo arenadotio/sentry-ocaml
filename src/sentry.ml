@@ -99,14 +99,11 @@ let find_config key default =
 let find_environment () = find_config environment_key default_environment
 let find_release () = find_config release_key default_release
 let find_server_name () = find_config server_name_key default_server_name
+
 let find_tags () =
-  match Scheduler.find_local tags_key, default_tags with
-  | None, default -> default
-  | (Some _) as tags, None -> tags
-  | Some tags, Some default ->
+  Option.merge (Scheduler.find_local tags_key) default_tags ~f:(fun tags default ->
     Map.merge_skewed tags default ~combine:(fun ~key:_ new_tag _ ->
-      new_tag)
-    |> Option.some
+      new_tag))
 
 let%test_unit "tag merging" =
   let find_tag () =
