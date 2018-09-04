@@ -65,6 +65,11 @@ let with_tags tags f =
   in
   with_config_item tags_key value f
 
+let maybe_with_tags tags f =
+  match tags with
+  | None -> f ()
+  | Some tags -> with_tags tags f
+
 (* Is there a better way to write this function? *)
 let rec with_config ?dsn ?environment ?release ?server_name ?tags f =
   match dsn with
@@ -86,11 +91,7 @@ let rec with_config ?dsn ?environment ?release ?server_name ?tags f =
         | Some server_name ->
           with_server_name server_name f
         | None ->
-          match tags with
-          | Some tags ->
-            with_tags tags f
-          | None ->
-            f ()
+          maybe_with_tags tags f
 
 let find_config key default =
   Option.first_some (Scheduler.find_local key) default
@@ -123,8 +124,8 @@ let%test_unit "tag merging" =
   find_tag ()
   |> [%test_result: string option] ~expect:(Some "first")
 
-let make_event ?(tags=[]) ?exn ?message () =
-  with_tags tags @@ fun () ->
+let make_event ?tags ?exn ?message () =
+  maybe_with_tags tags @@ fun () ->
   let environment = find_environment () in
   let release = find_release () in
   let server_name = find_server_name () in
@@ -163,44 +164,48 @@ let capture_error ?tags err =
   capture_event ?tags ~message ~exn ()
 
 let context ?tags f =
+  maybe_with_tags tags @@ fun () ->
   try
     f ()
   with e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception ?tags e;
+    capture_exception e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
 let context_ignore ?tags f =
+  maybe_with_tags tags @@ fun () ->
   try
     f ()
   with e ->
-    capture_exception ?tags e
+    capture_exception e
 
-let capture_and_return_or_error ?tags v =
+let capture_and_return_or_error v =
   match v with
   | Ok _ -> v
   | Error e ->
-    capture_error ?tags e;
+    capture_error e;
     v
 
 let context_or_error ?tags f =
-  context (fun () ->
+  context ?tags (fun () ->
     f ()
-    |> capture_and_return_or_error ?tags)
+    |> capture_and_return_or_error)
 
 let context_async ?tags f =
+  maybe_with_tags tags @@ fun () ->
   Monitor.try_with ~extract_exn:false ~rest:(`Call (capture_exception ?tags)) f
   >>= function
   | Ok res -> return res
   | Error e ->
     let backtrace = Caml.Printexc.get_raw_backtrace () in
-    capture_exception ?tags e;
+    capture_exception e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
 let context_async_ignore ?tags f =
-  Monitor.handle_errors f (capture_exception ?tags)
+  maybe_with_tags tags @@ fun () ->
+  Monitor.handle_errors f capture_exception
 
 let context_async_or_error ?tags f =
-  context_async (fun () ->
+  context_async ?tags (fun () ->
     f ()
-    >>| capture_and_return_or_error ?tags)
+    >>| capture_and_return_or_error)
