@@ -172,6 +172,25 @@ let context ?tags f =
     capture_exception e;
     Caml.Printexc.raise_with_backtrace e backtrace
 
+let%test_unit "context multiple levels of tags unique" =
+  with_tags ["a", "1"] @@ fun () ->
+  context ~tags:["b", "2"] @@ fun () ->
+  context ~tags:["c", "3"] @@ fun () ->
+  let tags = Option.value_exn ~here:[%here] (find_tags ()) in
+  List.map [ "a" ; "b" ; "c" ] ~f:(fun key ->
+    key, Map.find_exn tags key)
+  |> [%test_result: (string * string) list]
+       ~expect:[ "a", "1" ; "b", "2" ; "c", "3" ]
+
+let%test_unit "context multiple levels of tags conflicting" =
+  with_tags ["a", "1"] @@ fun () ->
+  context ~tags:["b", "2"] @@ fun () ->
+  context ~tags:["b", "3"] @@ fun () ->
+  let tags = Option.value_exn ~here:[%here] (find_tags ()) in
+  List.map [ "a" ; "b" ] ~f:(fun key ->
+    key, Map.find_exn tags key)
+  |> [%test_result: (string * string) list] ~expect:[ "a", "1" ; "b", "3" ]
+
 let context_ignore ?tags f =
   maybe_with_tags tags @@ fun () ->
   try
