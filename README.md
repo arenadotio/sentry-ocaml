@@ -27,10 +27,9 @@ In general, you should use this like:
 ```
 let () =
   let spec = Command.Spec.(...) in
-  Command.async_spec ~summary:"..." spec
-  @@ fun args () ->
+  Command.async_spec ~summary:"..." spec @@ fun args () ->
   (* Using [SENTRY_DSN] from the environment *)
-  Sentry.context @@ fun () ->
+  Sentry.with_exn_handler @@ fun () ->
   (* your normal code here *)
 ```
 
@@ -43,9 +42,9 @@ uploaded to Sentry:
 
 Then the exception will be re-thrown so your program will exit and print the
 backtrace to stderr as usual (if you want to continue after errors, wrap
-`Sentry.context` in another error handler or use `Sentry.context_ignore`).
+`Sentry.with_exn_handler` in another error handler or use `Sentry.with_exn_handler_ignore`).
 
-Note that `Sentry.context_or_error` exists (which handles both exceptions and
+Note that `Sentry.with_error_and_exn_handler` exists (which handles both exceptions and
 `Or_error.t`), but using exceptions exclusively is recommended because they have
 backtraces (and wrapping exceptions in `Error.t` loses whatever backtrace did
 exist in most cases).
@@ -65,17 +64,18 @@ From `Sys` or `Unix`:
   - `Sys.gethostname` -> `server_name`
   - `Sys.os_type` -> `os_type`
 
-You can override any of these with `Sentry.with_*` functions, i.e.
-`Sentry.with_environment`, `Sentry.with_release`, etc.
+You can override any of these with `Sentry.merge_extra`,
+`Sentry.set_environment`, and `Sentry.set_release`.
 
-You can also upload custom tags using either `Sentry.with_tags` or by passing
-`~tags` to a `capture` or `context` function. Tags will be merged for the
+You can also upload custom tags using either `Sentry.merge_tags` or by passing
+`~tags` to a `capture` function. Tags will be merged for the
 current async job, so you only need to pass additional tags:
 
 ```
-Sentry.context ~tags:[ "app_name", "http_server" ] @@ fun () ->
+Sentry.merge_tags [ "app_name", "http_server" ];
+Sentry.with_exn_handler @@ fun () ->
 ...
-Sentry.with_tags [ "method", "GET", "path", "/example" ] @@ fun () ->
+Sentry.merge_tags [ "method", "GET", "path", "/example" ];
 ...
 (* This will upload with default tags + app_name, method, path, and user_id *)
 Sentry.capture_message ~tags:[ "user_id", user_id ] "invalid login"
