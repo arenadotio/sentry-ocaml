@@ -4,7 +4,7 @@ open Core_kernel
 type t = private
   { event_id : Uuidm.t
   ; timestamp : Time.t
-  ; logger : string
+  ; logger : string option
   ; platform : Platform.t
   ; sdk : Sdk.t
   ; level : Severity_level.t option

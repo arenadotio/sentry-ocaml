@@ -56,7 +56,7 @@ type message =
 type event =
   { event_id : uuid
   ; timestamp : datetime
-  ; logger : string
+  ; ?logger : string nullable
   ; platform : platform
   ; sdk : sdk_info
   ; ?level : severity_level nullable

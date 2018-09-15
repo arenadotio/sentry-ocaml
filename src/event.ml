@@ -4,23 +4,23 @@ open Util
 type t =
   { event_id : Uuidm.t sexp_opaque
   ; timestamp : Time.t sexp_opaque
-  ; logger : string
+  ; logger : string sexp_option
   ; platform : Platform.t
   ; sdk : Sdk.t
-  ; level : Severity_level.t option
-  ; culprit : string option
-  ; server_name : string option
-  ; release : string option
+  ; level : Severity_level.t sexp_option
+  ; culprit : string sexp_option
+  ; server_name : string sexp_option
+  ; release : string sexp_option
   ; tags : string String.Map.t
-  ; environment : string option
+  ; environment : string sexp_option
   ; modules : string String.Map.t
   ; extra : Json.t String.Map.t
-  ; fingerprint : string list option
+  ; fingerprint : string list sexp_option
   ; exception_ : Exception.t list option sexp_opaque
-  ; message : Message.t option }
+  ; message : Message.t sexp_option }
 [@@deriving sexp_of]
 
-let make ?event_id ?timestamp ?context ?tags ?(logger="ocaml")
+let make ?event_id ?timestamp ?context ?tags ?logger
       ?(platform=`Other) ?(sdk=Sdk.default) ?level ?culprit ?fingerprint
       ?message ?exn () =
   let { Context.server_name ; release ; environment ; extra
@@ -81,7 +81,7 @@ let%expect_test "to_json_string basic" =
   make ~event_id ~timestamp ()
   |> to_json_string
   |> print_endline;
-  [%expect {| {"event_id":"bce345569e7548a384bac4512a9ad909","timestamp":"2018-08-03T11:44:21.298019","logger":"ocaml","platform":"other","sdk":{"name":"sentry-ocaml","version":"0.1"}} |}]
+  [%expect {| {"event_id":"bce345569e7548a384bac4512a9ad909","timestamp":"2018-08-03T11:44:21.298019","platform":"other","sdk":{"name":"sentry-ocaml","version":"0.1"}} |}]
 
 let%expect_test "to_json_string everything" =
   begin try
