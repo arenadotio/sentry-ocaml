@@ -17,14 +17,15 @@ type t =
   ; extra : Json.t String.Map.t
   ; fingerprint : string list sexp_option
   ; exception_ : Exception.t list option sexp_opaque
-  ; message : Message.t sexp_option }
+  ; message : Message.t sexp_option
+  ; breadcrumbs : Breadcrumb.t list }
 [@@deriving sexp_of]
 
 let make ?event_id ?timestamp ?context ?tags ?logger
       ?(platform=`Other) ?(sdk=Sdk.default) ?level ?culprit ?fingerprint
       ?message ?exn () =
   let { Context.server_name ; release ; environment ; extra
-      ; tags = context_tags } =
+      ; tags = context_tags ; breadcrumbs } =
     match context with
     | Some context -> context
     | None -> Context.empty ()
@@ -55,11 +56,12 @@ let make ?event_id ?timestamp ?context ?tags ?logger
   { event_id ; timestamp ; logger ; platform ; sdk ; level ; culprit
   ; server_name ; release ; tags ; environment ; modules = String.Map.empty
   ; extra = String.Table.to_alist extra |> String.Map.of_alist_exn
-  ; fingerprint ; message ; exception_ = exn }
+  ; fingerprint ; message ; exception_ = exn
+  ; breadcrumbs = Queue.to_list breadcrumbs }
 
 let to_payload { event_id ; timestamp ; logger ; platform ; sdk ; level
                ; culprit ; server_name ; release ; tags ; environment ; modules
-               ; extra ; fingerprint ; exception_ ; message } =
+               ; extra ; fingerprint ; exception_ ; message ; breadcrumbs } =
   { Payloads_t.event_id ; timestamp ; logger ; platform
   ; sdk = Sdk.to_payload sdk
   ; level ; culprit ; server_name ; release
@@ -69,7 +71,10 @@ let to_payload { event_id ; timestamp ; logger ; platform ; sdk ; level
   ; extra = map_to_alist_option extra
   ; fingerprint
   ; exception_ = Option.map ~f:Exception.list_to_payload exception_
-  ; message = Option.map ~f:Message.to_payload message }
+  ; message = Option.map ~f:Message.to_payload message
+  ; breadcrumbs = (match breadcrumbs with
+      | [] -> None
+      | _ -> Some (List.map breadcrumbs ~f:Breadcrumb.to_payload)) }
 
 let to_json_string t =
   to_payload t
@@ -96,6 +101,8 @@ let%expect_test "to_json_string everything" =
     context.environment <- Some "dev";
     Context.merge_modules [ "ocaml", "4.02.1" ; "core", "v0.10" ] context;
     Context.merge_extra [ "a thing", `String "value" ] context;
+    Breadcrumb.make ~timestamp ~message:"test crumb" ()
+    |> Fn.flip Context.add_breadcrumb context;
 
     make ~event_id ~timestamp ~logger:"test" ~platform:`Python ~context
       ~sdk:(Sdk.make ~name:"test-sdk" ~version:"10.5" ()) ~level:`Error
@@ -106,4 +113,4 @@ let%expect_test "to_json_string everything" =
     |> to_json_string
     |> print_endline
   end;
-  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":88,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]
+  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":93,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"},"breadcrumbs":[{"timestamp":"2014-12-23T22:44:21.230900","type":"default","message":"test crumb","data":{},"level":"info"}]} |}]

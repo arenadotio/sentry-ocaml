@@ -2,6 +2,7 @@ open Core_kernel
 open Async_kernel
 open Async_unix
 
+module Breadcrumb = Breadcrumb
 module Client = Client
 module Config = Config
 module Context = Context
@@ -50,6 +51,10 @@ let set_release release =
 let merge_tags tags =
   find_context ()
   |> Context.merge_tags tags
+
+let add_breadcrumb crumb =
+  find_context ()
+  |> Context.add_breadcrumb crumb
 
 let make_event ?tags ?exn ?message () =
   let context = find_context () in

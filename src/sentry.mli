@@ -1,6 +1,7 @@
 open Core_kernel
 open Async_kernel
 
+module Breadcrumb = Breadcrumb
 module Client = Client
 module Config = Config
 module Dsn = Dsn
@@ -33,6 +34,9 @@ val set_server_name : string -> unit
 
 (** Merge tags into the current context *)
 val merge_tags : (string * string) list -> unit
+
+(** Add a breadcrumb to the current context *)
+val add_breadcrumb : Breadcrumb.t -> unit
 
 (** [capture_message ?tags ?dsn message] uploads a message to Sentry using the
     given [dsn] (or looking it up in the environment).

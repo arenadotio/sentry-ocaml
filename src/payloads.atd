@@ -53,6 +53,14 @@ type message =
   ; ?params : string list nullable
   ; ?formatted : string nullable }
 
+type breadcrumb =
+  { timestamp : datetime
+  ; ?type_ <json name="type"> : string nullable
+  ; ?message : string nullable
+  ; ?data : (string *  json) list <json repr="object"> nullable
+  ; ?category : string nullable
+  ; ?level : string nullable }
+
 type event =
   { event_id : uuid
   ; timestamp : datetime
@@ -69,7 +77,8 @@ type event =
   ; ?extra : (string * json) list <json repr="object"> nullable
   ; ?fingerprint : string list nullable
   ; ?exception_ <json name="exception"> : exception_ nullable
-  ; ?message <json name="sentry.interfaces.Message"> : message nullable }
+  ; ?message <json name="sentry.interfaces.Message"> : message nullable
+  ; ?breadcrumbs : breadcrumb list nullable }
 
 type response =
   { id : uuid }

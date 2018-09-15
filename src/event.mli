@@ -17,7 +17,8 @@ type t = private
   ; extra : Json.t String.Map.t
   ; fingerprint : string list option
   ; exception_ : Exception.t list option
-  ; message : Message.t option }
+  ; message : Message.t option
+  ; breadcrumbs : Breadcrumb.t list }
 [@@deriving sexp_of]
 
 val make

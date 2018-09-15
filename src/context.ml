@@ -6,16 +6,18 @@ type t =
   ; mutable server_name : string option
   ; tags : string String.Table.t
   ; extra : Json.t String.Table.t
-  ; modules : string String.Table.t }
+  ; modules : string String.Table.t
+  ; breadcrumbs : Breadcrumb.t Queue.t }
 [@@deriving sexp_of]
 
-let empty () =
+let empty ?(max_breadcrumbs=10) () =
   { environment = None
   ; release = None
   ; server_name = None
   ; tags = String.Table.create ()
   ; extra = String.Table.create ()
-  ; modules = String.Table.create () }
+  ; modules = String.Table.create ()
+  ; breadcrumbs = Queue.create ~capacity:max_breadcrumbs () }
 
 let copy t =
   { t with
@@ -34,6 +36,11 @@ let merge_extra extra t =
 
 let merge_modules modules t =
   merge_into_table modules t.modules
+
+let add_breadcrumb crumb t =
+  if Queue.capacity t.breadcrumbs = Queue.length t.breadcrumbs then
+    Queue.dequeue_exn t.breadcrumbs |> ignore;
+  Queue.enqueue t.breadcrumbs crumb
 
 let default_environment = Sys.getenv_opt "SENTRY_ENVIRONMENT"
 let default_release = Sys.getenv_opt "SENTRY_RELEASE"
@@ -56,10 +63,10 @@ let default_extra =
       | Other o -> o) ]
   |> String.Table.of_alist_exn
 
-let default () =
-  { environment = default_environment
+let default ?max_breadcrumbs () =
+  let empty = empty ?max_breadcrumbs () in
+  { empty with
+    environment = default_environment
   ; release = default_release
   ; server_name = default_server_name
-  ; tags = String.Table.create ()
-  ; extra = String.Table.copy default_extra
-  ; modules = String.Table.create () }
+  ; extra = String.Table.copy default_extra }
