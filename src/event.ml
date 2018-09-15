@@ -14,17 +14,34 @@ type t =
   ; tags : string String.Map.t
   ; environment : string option
   ; modules : string String.Map.t
-  ; extra : string String.Map.t
+  ; extra : Json.t String.Map.t
   ; fingerprint : string list option
   ; exception_ : Exception.t list option sexp_opaque
   ; message : Message.t option }
 [@@deriving sexp_of]
 
-let make ?event_id ?timestamp ?(logger="ocaml") ?(platform=`Other)
-      ?(sdk=Sdk.default) ?level ?culprit ?server_name ?release
-      ?(tags=String.Map.empty) ?environment
-      ?(modules=String.Map.empty) ?(extra=String.Map.empty) ?fingerprint
+let make ?event_id ?timestamp ?context ?tags ?(logger="ocaml")
+      ?(platform=`Other) ?(sdk=Sdk.default) ?level ?culprit ?fingerprint
       ?message ?exn () =
+  let { Context.server_name ; release ; environment ; extra
+      ; tags = context_tags } =
+    match context with
+    | Some context -> context
+    | None -> Context.empty ()
+  in
+  let tags =
+    begin match tags with
+    | None
+    | Some [] -> context_tags
+    | Some tags ->
+      let merged = Hashtbl.copy context_tags in
+      List.iter tags ~f:(fun (key, data) ->
+        Hashtbl.set merged ~key ~data);
+      merged
+    end
+    |> Hashtbl.to_alist
+    |> String.Map.of_alist_exn
+  in
   let event_id =
     match event_id with
     | Some id -> id
@@ -36,8 +53,9 @@ let make ?event_id ?timestamp ?(logger="ocaml") ?(platform=`Other)
     | None -> Time.now ()
   in
   { event_id ; timestamp ; logger ; platform ; sdk ; level ; culprit
-  ; server_name ; release ; tags ; environment ; modules ; extra ; fingerprint
-  ; message ; exception_ = exn }
+  ; server_name ; release ; tags ; environment ; modules = String.Map.empty
+  ; extra = String.Table.to_alist extra |> String.Map.of_alist_exn
+  ; fingerprint ; message ; exception_ = exn }
 
 let to_payload { event_id ; timestamp ; logger ; platform ; sdk ; level
                ; culprit ; server_name ; release ; tags ; environment ; modules
@@ -72,16 +90,20 @@ let%expect_test "to_json_string everything" =
     let event_id = Uuid.wrap "ad2579b4f62f486498781636c1450148" in
     let timestamp = Time.of_string "2014-12-23T22:44:21.2309Z" in
     let message = Message.make ~message:"Testy test test" () in
-    make ~event_id ~timestamp ~logger:"test" ~platform:`Python
+    let context = Context.empty () in
+    context.server_name <- Some "example.com";
+    context.release <- Some "5";
+    context.environment <- Some "dev";
+    Context.merge_modules [ "ocaml", "4.02.1" ; "core", "v0.10" ] context;
+    Context.merge_extra [ "a thing", `String "value" ] context;
+
+    make ~event_id ~timestamp ~logger:"test" ~platform:`Python ~context
       ~sdk:(Sdk.make ~name:"test-sdk" ~version:"10.5" ()) ~level:`Error
-      ~culprit:"the tests" ~server_name:"example.com" ~release:"5"
-      ~tags:([ "a", "b" ; "c", "d" ] |> String.Map.of_alist_exn)
-      ~environment:"dev"
-      ~modules:([ "ocaml", "4.02.1" ; "core", "v0.10" ] |> String.Map.of_alist_exn)
-      ~extra:([ "a thing", "value" ] |> String.Map.of_alist_exn)
+      ~culprit:"the tests"
+      ~tags:[ "a", "b" ; "c", "d" ]
       ~fingerprint:["039432409" ; "asdf"]
       ~message ~exn:[Exception.of_exn exn] ()
     |> to_json_string
     |> print_endline
   end;
-  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":[["a","b"],["c","d"]],"environment":"dev","modules":[["core","v0.10"],["ocaml","4.02.1"]],"extra":[["a thing","value"]],"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":70,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]
+  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":88,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"}} |}]

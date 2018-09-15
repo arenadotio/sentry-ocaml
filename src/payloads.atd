@@ -1,3 +1,5 @@
+type json <ocaml module="Yojson.Basic"> = abstract
+
 type datetime = string wrap <ocaml module="Datetime">
 type platform = string wrap <ocaml module="Platform">
 type severity_level = string wrap <ocaml module="Severity_level">
@@ -61,10 +63,10 @@ type event =
   ; ?culprit : string nullable
   ; ?server_name : string nullable
   ; ?release : string nullable
-  ; ?tags : (string * string) list nullable <json repr="object">
+  ; ?tags : (string * string) list <json repr="object"> nullable
   ; ?environment : string nullable
-  ; ?modules : (string * string) list nullable <json repr="object">
-  ; ?extra : (string * string) list nullable <json repr="object">
+  ; ?modules : (string * string) list <json repr="object"> nullable
+  ; ?extra : (string * json) list <json repr="object"> nullable
   ; ?fingerprint : string list nullable
   ; ?exception_ <json name="exception"> : exception_ nullable
   ; ?message <json name="sentry.interfaces.Message"> : message nullable }

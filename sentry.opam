@@ -13,6 +13,7 @@ depends: [
   "cohttp-async" {>= "1.0.2"}
   "core" {>= "v0.10"}
   "hex" {>= "1.2.0"}
+  "json-derivers"
   "re2"
   "sexplib" {>= "v0.10"}
   "uuidm"

@@ -14,32 +14,25 @@ module Severity_level = Severity_level
     [SENTRY_DSN]) within the execution of [f] *)
 val with_dsn : Dsn.t -> (unit -> 'a) -> 'a
 
-(** [with_environment dsn f] overrides the default environment tag (from
-    the environment variable [SENTRY_ENVIRONMENT]) within the execution of [f]
-*)
-val with_environment : string -> (unit -> 'a) -> 'a
+(** [with_context f] sets the current thread-local context and runs [f] with
+    it. *)
+val with_context : Context.t -> (unit -> 'a) -> 'a
 
-(** [with_release dsn f] overrides the default release tag (from the environment
-    variable [SENTRY_RELEASE]) within the execution of [f] *)
-val with_release : string -> (unit -> 'a) -> 'a
+(** Like [with_new_context] but creates the new context for you as a copy
+    of the current context. *)
+val with_new_context : (Context.t -> 'a) -> 'a
 
-(** [with_server_name dsn f] overrides the default server name (default: lookup
-    host name) within the execution of [f] *)
-val with_server_name : string -> (unit -> 'a) -> 'a
+(** Override the environment in the current context *)
+val set_environment : string -> unit
 
-(** [with_tags tags f] merges the given tags with the default tags within the
-    execution of [f] *)
-val with_tags : (string * string) list -> (unit -> 'a) -> 'a
+(** Override the release in the current context *)
+val set_release : string -> unit
 
-(** Helper for calling multiple of the [with_*] functions above at once *)
-val with_config
-  : ?dsn:Dsn.t
-  -> ?environment:string
-  -> ?release:string
-  -> ?server_name:string
-  -> ?tags:(string * string) list
-  -> (unit -> 'a)
-  -> 'a
+(** Override the server name in the current context *)
+val set_server_name : string -> unit
+
+(** Merge tags into the current context *)
+val merge_tags : (string * string) list -> unit
 
 (** [capture_message ?tags ?dsn message] uploads a message to Sentry using the
     given [dsn] (or looking it up in the environment).
@@ -66,57 +59,32 @@ val capture_exception
     function. *)
 val capture_error : ?tags:(string * string) list -> Error.t -> unit
 
-(** [context ?dsn f] runs [f]. If [f] throws an exception, it will be
-    uploaded to Sentry and then re-reraised.
+(** [with_exn_handler ?dsn f] runs [f]. If [f] throws an exception, it will be
+    uploaded to Sentry and then re-reraised. *)
+val with_exn_handler : (unit -> 'a) -> 'a
 
-    If you pass [tags], it will be as if you called [with_tags] before this
-    function. *)
-val context : ?tags:(string * string) list -> (unit -> 'a) -> 'a
-
-(** [context_ignore ?dsn f] is like [context] except exceptions will not be
+(** [with_exn_handler ?dsn f] is like [context] except exceptions will not be
     re-raised. Use this if you're using Sentry in a loop where you want to
-    report on errors and then continue (like in an web server).
+    report on errors and then continue (like in an web server). *)
+val with_exn_handler_ignore : (unit -> unit) -> unit
 
-    If you pass [tags], it will be as if you called [with_tags] before this
-    function. *)
-val context_ignore : ?tags:(string * string) list -> (unit -> unit) -> unit
+(** [with_error_and_exn_handler ?dsn f] runs [f]. If [f] throws an exception or
+    error, it will be uploaded to Sentry and then re-raised or returned. Note
+    that [Error.t] does not handle backtraces as well as exceptions. *)
+val with_error_and_exn_handler : (unit -> 'a Or_error.t) -> 'a Or_error.t
 
-(** [context_or_error ?dsn f] runs [f]. If [f] throws an exception or error, it
-    will be uploaded to Sentry and then re-raised or returned. Note that
-    [Error.t] does not handle backtraces as well as exceptions.
-
-    If you pass [tags], it will be as if you called [with_tags] before this
-    function. *)
-val context_or_error
-  : ?tags:(string * string) list
-  -> (unit -> 'a Or_error.t)
-  -> 'a Or_error.t
-
-(** [context_async ?dsn f] runs [f]. If [f] throws one or more exceptions, they
+(** [with_async_exn_handler f] runs [f]. If [f] throws one or more exceptions, they
     will be uploaded to Sentry. The first raised exception willl be re-raised
     (multiple exceptions could be raised to the Async monitor but only one can
-    be re-raised).
+    be re-raised). *)
+val with_async_exn_handler : (unit -> 'a Deferred.t) -> 'a Deferred.t
 
-    If you pass [tags], it will be as if you called [with_tags] before this
-    function. *)
-val context_async
-  : ?tags:(string * string) list
-  -> (unit -> 'a Deferred.t)
-  -> 'a Deferred.t
+(** See [with_exn_handler_ignore] and [with_async_exn_handler] *)
+val with_async_exn_handler_ignore : (unit -> unit Deferred.t) -> unit Deferred.t
 
-(** See [context_ignore] and [context_async] *)
-val context_async_ignore
-  : ?tags:(string * string) list
-  -> (unit -> unit Deferred.t)
-  -> unit Deferred.t
-
-(** [context_async_or_error ?dsn f] runs [f]. If [f] throws an exception or
+(** [with_async_error_and_exn_handler f] runs [f]. If [f] throws an exception or
     returns an error, it will be uploaded to Sentry and then re-raised or
-    returned.
-
-    If you pass [tags], it will be as if you called [with_tags] before this
-    function. *)
-val context_async_or_error
-  : ?tags:(string * string) list
-  -> (unit -> 'a Deferred.Or_error.t)
+    returned. *)
+val with_async_error_and_exn_handler
+  : (unit -> 'a Deferred.Or_error.t)
   -> 'a Deferred.Or_error.t
