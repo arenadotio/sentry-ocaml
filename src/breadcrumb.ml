@@ -55,6 +55,33 @@ let to_payload t =
   { Payloads_t.timestamp = t.timestamp
   ; type_ = Some t.type_
   ; message = t.message
-  ; data = Some (Map.to_alist t.data)
+  ; data = Util.map_to_alist_option t.data
   ; category = t.category
   ; level = Some (level_to_string t.level) }
+
+let%test_module _ =
+  (module struct
+    let timestamp = Time.of_string "2018-09-12T12:09:02Z"
+
+    let%expect_test "empty to_payload" =
+      make ~timestamp ()
+      |> to_payload
+      |> Payloads_j.string_of_breadcrumb
+      |> print_endline;
+      [%expect {| {"timestamp":"2018-09-12T12:09:02.000000","type":"default","level":"info"} |}]
+
+    let%expect_test "navigation to_payload" =
+      make_navigation ~timestamp ~from:"example from" ~to_:"example to" ()
+      |> to_payload
+      |> Payloads_j.string_of_breadcrumb
+      |> print_endline;
+      [%expect {| {"timestamp":"2018-09-12T12:09:02.000000","type":"navigation","data":{"from":"example from","to":"example to"},"level":"info"} |}]
+
+    let%expect_test "http to_payload" =
+      make_navigation ~timestamp ~from:"example from" ~to_:"example to" ()
+      |> to_payload
+      |> Payloads_j.string_of_breadcrumb
+      |> print_endline;
+      [%expect {| {"timestamp":"2018-09-12T12:09:02.000000","type":"navigation","data":{"from":"example from","to":"example to"},"level":"info"} |}]
+
+  end)

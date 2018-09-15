@@ -74,7 +74,9 @@ let to_payload { event_id ; timestamp ; logger ; platform ; sdk ; level
   ; message = Option.map ~f:Message.to_payload message
   ; breadcrumbs = (match breadcrumbs with
       | [] -> None
-      | _ -> Some (List.map breadcrumbs ~f:Breadcrumb.to_payload)) }
+      | _ ->
+        List.map breadcrumbs ~f:Breadcrumb.to_payload
+        |> Util.empty_list_option) }
 
 let to_json_string t =
   to_payload t
@@ -113,4 +115,4 @@ let%expect_test "to_json_string everything" =
     |> to_json_string
     |> print_endline
   end;
-  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":93,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"},"breadcrumbs":[{"timestamp":"2014-12-23T22:44:21.230900","type":"default","message":"test crumb","data":{},"level":"info"}]} |}]
+  [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":95,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"},"breadcrumbs":[{"timestamp":"2014-12-23T22:44:21.230900","type":"default","message":"test crumb","level":"info"}]} |}]
