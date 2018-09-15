@@ -32,6 +32,25 @@ let make ?timestamp ?(type_="default") ?message ?(data=String.Map.empty)
   in
   { timestamp ; type_ ; message ; data ; category ; level }
 
+let make_navigation ?timestamp ?message ?category ?level ~from ~to_ () =
+  let data =
+    [ "from", `String from
+    ; "to", `String to_ ]
+    |> String.Map.of_alist_exn
+  in
+  make ?timestamp ?message ?category ?level ~data ~type_:"navigation" ()
+
+let make_http ?timestamp ?message ?category ?level ~url ~method_ ~status_code
+      ~reason () =
+  let data =
+    [ "url", `String url
+    ; "method", `String method_
+    ; "status_code", `Int status_code
+    ; "reason", `String reason ]
+    |> String.Map.of_alist_exn
+  in
+  make ?timestamp ?message ?category ?level ~data ~type_:"http" ()
+
 let to_payload t =
   { Payloads_t.timestamp = t.timestamp
   ; type_ = Some t.type_

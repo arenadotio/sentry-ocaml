@@ -27,4 +27,26 @@ val make
   -> unit
   -> t
 
+  val make_navigation
+  : ?timestamp:Time.t
+  -> ?message:string
+  -> ?category:string
+  -> ?level:level
+  -> from:string
+  -> to_:string
+  -> unit
+  -> t
+
+  val make_http
+  : ?timestamp:Time.t
+  -> ?message:string
+  -> ?category:string
+  -> ?level:level
+  -> url:string
+  -> method_:string
+  -> status_code:int
+  -> reason:string
+  -> unit
+  -> t
+
 val to_payload : t -> Payloads_t.breadcrumb
