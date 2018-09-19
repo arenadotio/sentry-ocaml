@@ -72,7 +72,7 @@ let arg_exn =
   Command.Spec.Arg_type.create of_string_exn
 
 let event_store_uri { uri ; project_id } =
-  sprintf "/api/%d/store" project_id
+  sprintf "/api/%d/store/" project_id
   |> Uri.with_path uri
 
 let%test_unit "full DSN" =
