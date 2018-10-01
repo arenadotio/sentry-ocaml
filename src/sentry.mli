@@ -21,8 +21,8 @@ val with_dsn : Dsn.t -> (unit -> 'a) -> 'a
 val with_context : Context.t -> (unit -> 'a) -> 'a
 
 (** Like [with_new_context] but creates the new context for you as a copy
-    of the current context. *)
-val with_new_context : (Context.t -> 'a) -> 'a
+    of the current context. [~tags] will be merged into the new context. *)
+val with_new_context : ?tags:(string * string) list -> (Context.t -> 'a) -> 'a
 
 (** Override the environment in the current context *)
 val set_environment : string -> unit

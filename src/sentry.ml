@@ -35,9 +35,12 @@ let find_context () =
   | Some context -> context
   | None -> Lazy.force default_context
 
-let with_new_context f =
+let with_new_context ?tags f =
   let context = find_context () |> Context.copy in
-  with_context context (fun () -> f context)
+  with_context context (fun () ->
+    Option.iter tags ~f:(fun tags ->
+      Context.merge_tags tags context);
+    f context)
 
 let set_environment env =
   (find_context ()).environment <- Some env
