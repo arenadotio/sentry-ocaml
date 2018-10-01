@@ -4,6 +4,7 @@ open Async_kernel
 module Breadcrumb = Breadcrumb
 module Client = Client
 module Config = Config
+module Context = Context
 module Dsn = Dsn
 module Event = Event
 module Exception = Exception
