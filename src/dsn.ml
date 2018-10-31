@@ -1,13 +1,13 @@
 open Core
 
 type t' =
-  { uri : Uri.t
+  { uri : Uri_sexp.t
   ; public_key : string
   ; private_key : string option
   ; project_id : int }
-[@@deriving compare, sexp_of]
+[@@deriving sexp_of]
 
-type t = t' option [@@deriving compare, sexp_of]
+type t = t' option [@@deriving sexp_of]
 
 let make ~uri ~public_key ?private_key ~project_id () =
   Some { uri ; public_key ; private_key ; project_id }

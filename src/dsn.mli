@@ -1,7 +1,7 @@
 open Core
 
 type t' = private
-  { uri : Uri.t
+  { uri : Uri_sexp.t
   ; public_key : string
   ; private_key : string option
   ; project_id : int }
