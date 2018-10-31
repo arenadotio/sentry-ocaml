@@ -1,9 +1,18 @@
 open Core
 
+
+type uri = Uri.t
+
+let compare_uri = Uri.compare
+
+let sexp_of_uri u =
+  Uri.to_string u
+  |> sexp_of_string
+
 type t' =
-  { uri : Uri.t
+  { uri : uri
   ; public_key : string
-  ; private_key : string option
+  ; private_key : string sexp_option
   ; project_id : int }
 [@@deriving compare, sexp_of]
 

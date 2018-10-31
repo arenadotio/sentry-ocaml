@@ -5,7 +5,7 @@ type t' = private
   ; public_key : string
   ; private_key : string option
   ; project_id : int }
-[@@deriving sexp_of]
+[@@deriving compare, sexp_of]
 
 type t = t' option [@@deriving sexp_of]
 
