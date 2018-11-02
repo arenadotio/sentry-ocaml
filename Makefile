@@ -1,21 +1,21 @@
 all: build
 
 build:
-	@jbuilder build @install @examples
+	@dune build @install @examples
 
 clean:
 	@rm -rf `find . -name 'bisect*.out'` _coverage
-	@jbuilder clean
+	@dune clean
 
 coverage: clean
-	@BISECT_ENABLE=YES jbuilder runtest
+	@BISECT_ENABLE=YES dune runtest
 	@bisect-ppx-report -I _build/default/ -html _coverage/ \
 	  `find . -name 'bisect*.out'`
 
 install: build
-	@jbuilder install
+	@dune install
 
 test:
-	@jbuilder runtest --force
+	@dune runtest --force
 
 .PHONY: all build clean coverage test

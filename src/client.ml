@@ -5,7 +5,7 @@ open Async_unix
 let user_agent =
   sprintf "%s/%s" Config.name Config.version
 
-let dsn_to_auth_header { Dsn.uri ; public_key ; private_key } time =
+let dsn_to_auth_header { Dsn.uri ; public_key ; private_key ; _ } time =
   let value =
     let base =
       sprintf "Sentry sentry_version=7, \
@@ -48,7 +48,7 @@ let rec send_request ~headers ~data uri =
     return (response, body)
 
 let send_event_and_wait_exn ~dsn event =
-  let headers = make_headers dsn event.Event.timestamp in
+  let headers = make_headers ~dsn event.Event.timestamp in
   let uri = Dsn.event_store_uri dsn in
   let data = Event.to_json_string event in
   let%bind response, body = send_request ~headers ~data uri in

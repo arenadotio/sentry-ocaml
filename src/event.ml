@@ -25,7 +25,7 @@ let make ?event_id ?timestamp ?context ?tags ?logger
       ?(platform=`Other) ?(sdk=Sdk.default) ?level ?culprit ?fingerprint
       ?message ?exn () =
   let { Context.server_name ; release ; environment ; extra
-      ; tags = context_tags ; breadcrumbs } =
+      ; tags = context_tags ; breadcrumbs ; _ } =
     match context with
     | Some context -> context
     | None -> Context.empty ()

@@ -120,8 +120,7 @@ let of_exn exn =
     |> List.filter_map ~f:(fun frame ->
       match Caml.Printexc.Slot.location frame with
       | None -> None
-      | Some { Caml.Printexc.filename ; line_number ; start_char
-             ; end_char } ->
+      | Some { Caml.Printexc.filename ; line_number ; start_char ; _ } ->
         Frame.make ~filename ~lineno:line_number ~colno:start_char ()
         |> Option.some)
     |> Or_error.all
@@ -157,8 +156,7 @@ let of_exn exn =
             |> List.map ~f:(fun arg ->
               Sexp.of_string arg)
           in
-          Atom name :: args
-          |> Sexp.List
+          Sexp.List (Atom name :: args)
         | _ -> assert false
       end
       |> function

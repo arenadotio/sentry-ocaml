@@ -1,6 +1,5 @@
 open Core
 
-
 type uri = Uri.t
 
 let compare_uri = Uri.compare
@@ -57,7 +56,7 @@ let of_uri_exn dsn =
 let of_uri dsn =
   try
     of_uri_exn dsn
-  with e ->
+  with _ ->
     None
 
 let of_string_exn dsn =
@@ -67,7 +66,7 @@ let of_string_exn dsn =
 let of_string dsn =
   try
     of_string_exn dsn
-  with e ->
+  with _ ->
     None
 
 let default =
@@ -80,7 +79,7 @@ let arg =
 let arg_exn =
   Command.Spec.Arg_type.create of_string_exn
 
-let event_store_uri { uri ; project_id } =
+let event_store_uri { uri ; project_id ; _ } =
   sprintf "/api/%d/store/" project_id
   |> Uri.with_path uri
 

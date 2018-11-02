@@ -1,4 +1,3 @@
-open Core_kernel
 open Async_kernel
 
 (** Low level functions to access the Sentry API. You probably want the high
