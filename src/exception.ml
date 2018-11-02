@@ -181,7 +181,7 @@ let of_exn exn =
   in
   (* Combine the stack trace from the Monitor exn if applicable *)
   let stacktrace, value =
-    if base_exn = exn then
+    if phys_equal base_exn exn then
       stacktrace, value
     else
       let monitor_trace =
@@ -252,6 +252,12 @@ let exn_test_helper e =
     |> Payloads_j.string_of_exception_value
     |> print_endline
   end
+
+exception Exception_containing_function of (unit -> unit)
+
+let%expect_test "don't throw compare error on exn containing function" =
+  exn_test_helper (Exception_containing_function Fn.id);
+  [%expect {| {"type":"Exception_containing_function","value":"_","stacktrace":{"frames":[{"filename":"src/exception.ml","lineno":192,"colno":4}]}} |}]
 
 let%expect_test "parse exn to payload" =
   exn_test_helper (Failure "This is a test");
