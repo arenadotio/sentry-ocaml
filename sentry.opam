@@ -19,6 +19,7 @@ depends: [
   "sexplib" {>= "v0.10"}
   "uuidm"
   "uri"
+  "yojson" {<= "1.5.0"}
 
   "dune" {build & >= "1.4.0"}
   "ppx_jane" {build}

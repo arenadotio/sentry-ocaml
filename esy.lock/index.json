@@ -1,5 +1,5 @@
 {
-  "checksum": "90af27292bd927f7d696a5e50681e682",
+  "checksum": "29055ac86130e3cd4aa19d2d83eb0c5a",
   "root": "sentry-ocaml@link-dev:./sentry.opam",
   "node": {
     "sentry-ocaml@link-dev:./sentry.opam": {
@@ -13,6 +13,7 @@
       },
       "overrides": [ "package.json" ],
       "dependencies": [
+        "@opam/yojson@opam:1.5.0@890db858",
         "@opam/uuidm@opam:0.9.6@bcd0dcef", "@opam/uri@opam:2.2.0@8db9cce1",
         "@opam/sexplib@opam:v0.11.0@bf5282c9",
         "@opam/re2@opam:v0.11.0@4404e891",
@@ -28,6 +29,7 @@
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
+        "@opam/yojson@opam:1.5.0@890db858",
         "@opam/uuidm@opam:0.9.6@bcd0dcef", "@opam/uri@opam:2.2.0@8db9cce1",
         "@opam/sexplib@opam:v0.11.0@bf5282c9",
         "@opam/re2@opam:v0.11.0@4404e891", "@opam/ounit@opam:2.0.8@586bd5ee",
@@ -54,20 +56,20 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "@opam/yojson@opam:1.7.0@2d92307e": {
-      "id": "@opam/yojson@opam:1.7.0@2d92307e",
+    "@opam/yojson@opam:1.5.0@890db858": {
+      "id": "@opam/yojson@opam:1.5.0@890db858",
       "name": "@opam/yojson",
-      "version": "opam:1.7.0",
+      "version": "opam:1.5.0",
       "source": {
         "type": "install",
         "source": [
-          "archive:https://opam.ocaml.org/cache/md5/b8/b89d39ca3f8c532abe5f547ad3b8f84d#md5:b89d39ca3f8c532abe5f547ad3b8f84d",
-          "archive:https://github.com/ocaml-community/yojson/releases/download/1.7.0/yojson-1.7.0.tbz#md5:b89d39ca3f8c532abe5f547ad3b8f84d"
+          "archive:https://opam.ocaml.org/cache/md5/d8/d80de1bacdde292af42f7c78b323da7b#md5:d80de1bacdde292af42f7c78b323da7b",
+          "archive:https://github.com/ocaml-community/yojson/releases/download/1.5.0/yojson-1.5.0.tbz#md5:d80de1bacdde292af42f7c78b323da7b"
         ],
         "opam": {
           "name": "yojson",
-          "version": "1.7.0",
-          "path": "esy.lock/opam/yojson.1.7.0"
+          "version": "1.5.0",
+          "path": "esy.lock/opam/yojson.1.5.0"
         }
       },
       "overrides": [],
@@ -1684,12 +1686,12 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/ocamlfind@opam:1.8.0@96572762",
         "@opam/dune@opam:1.7.1@6f40bfee", "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/ocamlfind@opam:1.8.0@96572762"
       ]
     },
@@ -2670,13 +2672,13 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/jbuilder@opam:transition@58bdfe0a",
         "@opam/biniou@opam:1.2.0@c8516f18",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/biniou@opam:1.2.0@c8516f18"
       ]
     },
@@ -2698,14 +2700,14 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/jbuilder@opam:transition@58bdfe0a",
         "@opam/biniou@opam:1.2.0@c8516f18",
         "@opam/atdgen-runtime@opam:2.0.0@8a75c3bb",
         "@opam/atd@opam:2.0.0@087614b7", "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.7.0@2d92307e",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/biniou@opam:1.2.0@c8516f18",
         "@opam/atdgen-runtime@opam:2.0.0@8a75c3bb",
         "@opam/atd@opam:2.0.0@087614b7"
