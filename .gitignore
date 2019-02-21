@@ -1,5 +1,7 @@
 _build
 _coverage
+_esy
 .merlin
+node_modules
 sentry.install
 bisect*.out

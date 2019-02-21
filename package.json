@@ -1,0 +1,9 @@
+{
+  "source": "./sentry.opam",
+  "override": {
+    "buildsInSource": "_build",
+    "devDependencies": {
+      "@opam/merlin": "*"
+    }
+  }
+}
