@@ -1,3 +1,9 @@
+(env
+  (dev
+    (flags (:standard -w -3)))
+  (release
+    (flags (:standard -w -3))))
+
 (library
   (public_name sentry)
   (libraries async_kernel atdgen cohttp-async core_kernel hex json-derivers uri uuidm re2 yojson)
