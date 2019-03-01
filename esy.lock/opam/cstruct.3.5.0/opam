@@ -28,6 +28,6 @@ structures directly from OCaml.  It supports both reading and writing to these
 structures, and they are accessed via the `Bigarray` module."""
 url {
   src:
-    "https://github.com/mirage/ocaml-cstruct/releases/download/v3.4.0/cstruct-v3.4.0.tbz"
-  checksum: "md5=f32544c90e5f6212977473895166d55b"
+    "https://github.com/mirage/ocaml-cstruct/releases/download/v3.5.0/cstruct-v3.5.0.tbz"
+  checksum: "md5=019c59aa18690fc05b80be1720efb6e5"
 }
