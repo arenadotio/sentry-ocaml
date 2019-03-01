@@ -1,5 +1,5 @@
 {
-  "checksum": "473dd5df610ad87cc31c396133218a41",
+  "checksum": "df0068749ec10230dfeeae3040331756",
   "root": "sentry-ocaml@link-dev:./sentry.opam",
   "node": {
     "sentry-ocaml@link-dev:./sentry.opam": {
@@ -13,7 +13,7 @@
       },
       "overrides": [ "package.json" ],
       "dependencies": [
-        "@opam/yojson@opam:1.5.0@890db858",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/uuidm@opam:0.9.6@bcd0dcef", "@opam/uri@opam:2.2.0@dfca6d0f",
         "@opam/sexplib@opam:v0.11.0@bf5282c9",
         "@opam/re2@opam:v0.11.0@4404e891",
@@ -29,7 +29,7 @@
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
       "devDependencies": [
-        "@opam/yojson@opam:1.5.0@890db858",
+        "ocaml@4.7.1004@d41d8cd9", "@opam/yojson@opam:1.5.0@890db858",
         "@opam/uuidm@opam:0.9.6@bcd0dcef", "@opam/uri@opam:2.2.0@dfca6d0f",
         "@opam/sexplib@opam:v0.11.0@bf5282c9",
         "@opam/re2@opam:v0.11.0@4404e891", "@opam/ounit@opam:2.0.8@def2c94d",
