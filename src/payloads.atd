@@ -1,36 +1,37 @@
 type json <ocaml module="Yojson.Basic"> = abstract
 
+type capped_string = string wrap <ocaml module="Capped_string">
 type datetime = string wrap <ocaml module="Datetime">
 type platform = string wrap <ocaml module="Platform">
 type severity_level = string wrap <ocaml module="Severity_level">
 type uuid = string wrap <ocaml module="Uuid">
 
 type sdk_info =
-  { name : string
-  ; version: string
-  ; ?integrations : string list nullable }
+  { name : capped_string
+  ; version: capped_string
+  ; ?integrations : capped_string list nullable }
 
 type mechanism =
-  { type_ <json name="type"> : string
-  ; ?description : string nullable
-  ; ?help_link : string nullable
+  { type_ <json name="type"> : capped_string
+  ; ?description : capped_string nullable
+  ; ?help_link : capped_string nullable
   ; ?handled : bool nullable
   (* TODO: meta *)
-  ; ?data : (string * string) list nullable <json repr="object"> }
+  ; ?data : (capped_string * capped_string) list nullable <json repr="object"> }
 
 type stackframe =
-  { ?filename : string nullable
-  ; ?function_ <json name="function"> : string nullable
-  ; ?module_ <json name="module"> : string nullable
+  { ?filename : capped_string nullable
+  ; ?function_ <json name="function"> : capped_string nullable
+  ; ?module_ <json name="module"> : capped_string nullable
   ; ?lineno : int nullable
   ; ?colno : int nullable
-  ; ?abs_path : string nullable
-  ; ?context_line : string nullable
-  ; ?pre_context : string list nullable
-  ; ?post_context : string list nullable
+  ; ?abs_path : capped_string nullable
+  ; ?context_line : capped_string nullable
+  ; ?pre_context : capped_string list nullable
+  ; ?post_context : capped_string list nullable
   ; ?in_app : bool nullable
-  ; ?vars : (string * string) list nullable <json repr="object">
-  ; ?package : string nullable
+  ; ?vars : (capped_string * capped_string) list nullable <json repr="object">
+  ; ?package : capped_string nullable
   ; ?platform : platform nullable
   (* TODO: image_addr, instruction_addr, symbol_addr, instruction_offset *) }
 
@@ -38,10 +39,10 @@ type stacktrace =
   { frames : stackframe list }
 
 type exception_value =
-  { type_ <json name="type"> : string
-  ; ?value : string nullable
-  ; ?module_ <json name="module"> : string nullable
-  ; ?thread_id : string nullable
+  { type_ <json name="type"> : capped_string
+  ; ?value : capped_string nullable
+  ; ?module_ <json name="module"> : capped_string nullable
+  ; ?thread_id : capped_string nullable
   ; ?mechanism : mechanism nullable
   ; ?stacktrace : stacktrace nullable }
 
@@ -49,33 +50,33 @@ type exception_ =
   { values : exception_value list }
 
 type message =
-  { message : string
-  ; ?params : string list nullable
-  ; ?formatted : string nullable }
+  { message : capped_string
+  ; ?params : capped_string list nullable
+  ; ?formatted : capped_string nullable }
 
 type breadcrumb =
   { timestamp : datetime
-  ; ?type_ <json name="type"> : string nullable
-  ; ?message : string nullable
-  ; ?data : (string *  json) list <json repr="object"> nullable
-  ; ?category : string nullable
-  ; ?level : string nullable }
+  ; ?type_ <json name="type"> : capped_string nullable
+  ; ?message : capped_string nullable
+  ; ?data : (capped_string *  json) list <json repr="object"> nullable
+  ; ?category : capped_string nullable
+  ; ?level : capped_string nullable }
 
 type event =
   { event_id : uuid
   ; timestamp : datetime
-  ; ?logger : string nullable
+  ; ?logger : capped_string nullable
   ; platform : platform
   ; sdk : sdk_info
   ; ?level : severity_level nullable
-  ; ?culprit : string nullable
-  ; ?server_name : string nullable
-  ; ?release : string nullable
-  ; ?tags : (string * string) list <json repr="object"> nullable
-  ; ?environment : string nullable
-  ; ?modules : (string * string) list <json repr="object"> nullable
-  ; ?extra : (string * json) list <json repr="object"> nullable
-  ; ?fingerprint : string list nullable
+  ; ?culprit : capped_string nullable
+  ; ?server_name : capped_string nullable
+  ; ?release : capped_string nullable
+  ; ?tags : (capped_string * capped_string) list <json repr="object"> nullable
+  ; ?environment : capped_string nullable
+  ; ?modules : (capped_string * capped_string) list <json repr="object"> nullable
+  ; ?extra : (capped_string * json) list <json repr="object"> nullable
+  ; ?fingerprint : capped_string list nullable
   ; ?exception_ <json name="exception"> : exception_ nullable
   ; ?message <json name="sentry.interfaces.Message"> : message nullable
   ; ?breadcrumbs : breadcrumb list nullable }
