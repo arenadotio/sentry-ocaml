@@ -1,5 +1,10 @@
 open Core_kernel
 
+(** [cap_string_length ?max_len str] creates a substring of [str] of length
+    [max_len] if [str] is longer than [max_len]. Otherwise returns [str]
+    unchanged. *)
+val cap_string_length : ?max_len:int -> string -> string
+
 (** [empty_list_option l] returns [None] if l is an empty list and returns
     [Some l] otherwise. This is useful for removing empty lists from our JSON
     payloads. *)

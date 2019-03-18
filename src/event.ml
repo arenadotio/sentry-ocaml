@@ -116,3 +116,18 @@ let%expect_test "to_json_string everything" =
     |> print_endline
   end;
   [%expect {| {"event_id":"ad2579b4f62f486498781636c1450148","timestamp":"2014-12-23T22:44:21.230900","logger":"test","platform":"python","sdk":{"name":"test-sdk","version":"10.5"},"level":"error","culprit":"the tests","server_name":"example.com","release":"5","tags":{"a":"b","c":"d"},"environment":"dev","extra":{"a thing":"value"},"fingerprint":["039432409","asdf"],"exception":{"values":[{"type":"Failure","value":"test","stacktrace":{"frames":[{"filename":"src/event.ml","lineno":95,"colno":4}]}}]},"sentry.interfaces.Message":{"message":"Testy test test"},"breadcrumbs":[{"timestamp":"2014-12-23T22:44:21.230900","type":"default","message":"test crumb","level":"info"}]} |}]
+
+let%expect_test "to_json_string really long message" =
+  (* String_capped.t should ensure that the message is capped to 512 characters.
+     which will keep the length of the total string at 708 chars *)
+  let event_id = Uuid.wrap "bce345569e7548a384bac4512a9ad909" in
+  let timestamp = Time.of_string "2018-08-03T11:44:21.298019Z" in
+  let message = Message.make ~message:(String.init 1000 ~f:(Fn.const 'a')) () in
+  let output =
+    make ~event_id ~timestamp ~message ()
+    |> to_json_string
+  in
+  String.length output
+  |> [%test_result: int] ~expect:708;
+  print_endline output;
+  [%expect {| {"event_id":"bce345569e7548a384bac4512a9ad909","timestamp":"2018-08-03T11:44:21.298019","platform":"other","sdk":{"name":"sentry-ocaml","version":"0.1"},"sentry.interfaces.Message":{"message":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}} |}]
