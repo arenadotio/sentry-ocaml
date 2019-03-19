@@ -13,8 +13,8 @@ build: [
 depends: [
   "async" {>= "v0.10"}
   "atdgen"
-  "cohttp" {>= "2.0.0"}
-  "cohttp-async" {>= "2.0.0"}
+  "cohttp" {< "2.0.0"}
+  "cohttp-async" {>= "1.0.2" & < "2.0.0"}
   "core" {>= "v0.10"}
   "hex" {>= "1.2.0"}
   "json-derivers"

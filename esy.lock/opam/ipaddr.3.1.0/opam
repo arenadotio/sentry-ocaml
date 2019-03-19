@@ -30,9 +30,9 @@ depends: [
   "ocaml" {>= "4.04.0"}
   "dune" {build}
   "macaddr"
-  "sexplib0" {< "v0.12"}
+  "sexplib0"
   "ounit" {with-test}
-  "ppx_sexp_conv" {with-test & < "v0.12"}
+  "ppx_sexp_conv" {with-test}
 ]
 build: [
   ["dune" "subst"] {pinned}
@@ -42,6 +42,6 @@ build: [
 dev-repo: "git+https://github.com/mirage/ocaml-ipaddr.git"
 url {
   src:
-    "https://github.com/mirage/ocaml-ipaddr/releases/download/3.0.0/ipaddr-3.0.0.tbz"
-  checksum: "md5=29248b09ead9ac272cd0f4c8ae934082"
+    "https://github.com/mirage/ocaml-ipaddr/releases/download/v3.1.0/ipaddr-v3.1.0.tbz"
+  checksum: "md5=471a594563bb9c3dd91ae912b5ffd6ed"
 }

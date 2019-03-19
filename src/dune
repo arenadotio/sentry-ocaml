@@ -6,7 +6,7 @@
 
 (library
   (public_name sentry)
-  (libraries async_kernel atdgen cohttp-async core_kernel hex json-derivers uri uuidm re2 yojson)
+  (libraries async_kernel atdgen cohttp.async core_kernel hex json-derivers uri uuidm re2 yojson)
   (inline_tests (flags (-verbose)))
   (preprocess (pps ppx_jane bisect_ppx -- -conditional -exclude-file src/.exclude))
   (preprocessor_deps .exclude))
