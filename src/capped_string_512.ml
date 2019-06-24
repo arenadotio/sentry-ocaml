@@ -4,7 +4,7 @@ open Sexplib.Conv
 type t = string [@@deriving sexp_of]
 
 let unwrap t =
-  Util.cap_string_length t
+  Util.cap_string_length ~max_len:512 t
 
 let wrap t = t
 
