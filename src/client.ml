@@ -91,7 +91,7 @@ let event_pipe =
   in
   let consumer = Pipe.add_consumer reader
                    ~downstream_flushed:(Fn.const (return `Ok)) in
-  Pipe.iter ~consumer reader ~f:(fun (dsn, event) ->
+  Pipe.iter ~flushed:(Pipe.Flushed.Consumer consumer) reader ~f:(fun (dsn, event) ->
     send_event_and_wait ~dsn event
     >>| fun _ -> Pipe.Consumer.values_sent_downstream consumer)
   |> don't_wait_for;

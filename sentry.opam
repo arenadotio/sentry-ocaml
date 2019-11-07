@@ -11,11 +11,11 @@ build: [
 ]
 
 depends: [
-  "async" {>= "v0.10"}
+  "async" {>= "v0.12"}
   "atdgen"
   "cohttp" {>= "2.0.0"}
   "cohttp-async" {>= "2.0.0"}
-  "core" {>= "v0.10"}
+  "core" {>= "v0.12"}
   "hex" {>= "1.2.0"}
   "json-derivers"
   "ocaml" {>= "4.05.0"}
