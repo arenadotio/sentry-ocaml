@@ -12,7 +12,7 @@ depexts: [
   ["debianutils"] {os-distribution = "debian"}
   ["debianutils"] {os-distribution = "ubuntu"}
   ["which"] {os-distribution = "nixos"}
-  ["which"] {os-distribution = "arch"}
+  ["which"] {os-distribution = "archlinux"}
 ]
 synopsis: "Virtual package relying on which"
 description:
