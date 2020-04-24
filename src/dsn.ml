@@ -93,19 +93,20 @@ let%test_unit "only public key DSN" =
       "https://lkasl@test.example.com/56789" |> f |> [%test_result: t] ~expect)
 ;;
 
-let%test_unit "empty DSN no exception" = of_string "" |> ignore
+let%test_unit "empty DSN no exception" = (of_string "" : t) |> ignore
 
 let%expect_test "empty DSN exception" =
-  Util.with_print_exn (fun () -> of_string_exn "" |> ignore);
+  Util.with_print_exn (fun () -> (of_string_exn "" : t) |> ignore);
   [%expect
     {| (Failure "Missing required DSN field(s): SCHEME,HOST,PUBLIC_KEY,PROJECT_ID") |}]
 ;;
 
 let%test_unit "invalid DSN no exception" =
-  of_string "https://asdf@example.com/abcd" |> ignore
+  (of_string "https://asdf@example.com/abcd" : t) |> ignore
 ;;
 
 let%expect_test "invalid DSN exception" =
-  Util.with_print_exn (fun () -> of_string_exn "https://asdf@example.com/abcd" |> ignore);
+  Util.with_print_exn (fun () ->
+      (of_string_exn "https://asdf@example.com/abcd" : t) |> ignore);
   [%expect {| (Failure "Invalid PROJECT_ID: abcd (should be an integer)") |}]
 ;;

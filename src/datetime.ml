@@ -3,7 +3,8 @@ open Core_kernel
 type t = Time.t
 
 let unwrap t =
-  Time.to_string_iso8601_basic ~zone:Time.Zone.utc t |> String.rstrip ~drop:(( = ) 'Z')
+  Time.to_string_iso8601_basic ~zone:Time.Zone.utc t
+  |> String.rstrip ~drop:(Char.( = ) 'Z')
 ;;
 
 let wrap s =
