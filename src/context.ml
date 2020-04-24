@@ -34,7 +34,7 @@ let merge_modules modules t = merge_into_table modules t.modules
 
 let add_breadcrumb crumb t =
   if Queue.capacity t.breadcrumbs = Queue.length t.breadcrumbs
-  then Queue.dequeue_exn t.breadcrumbs |> ignore;
+  then (Queue.dequeue_exn t.breadcrumbs : Breadcrumb.t) |> ignore;
   Queue.enqueue t.breadcrumbs crumb
 ;;
 

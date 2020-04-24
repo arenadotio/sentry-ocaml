@@ -88,10 +88,8 @@ let event_pipe =
       Pipe.upstream_flushed p >>| ignore)
     else return ()
   in
-  let consumer = Pipe.add_consumer reader ~downstream_flushed:(Fn.const (return `Ok)) in
-  Pipe.iter ~consumer reader ~f:(fun (dsn, event) ->
-      send_event_and_wait ~dsn event
-      >>| fun _ -> Pipe.Consumer.values_sent_downstream consumer)
+  Pipe.iter ~flushed:When_value_processed reader ~f:(fun (dsn, event) ->
+      send_event_and_wait ~dsn event |> Deferred.ignore_m)
   |> don't_wait_for;
   Shutdown.at_shutdown (fun () ->
       close writer

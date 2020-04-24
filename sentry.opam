@@ -11,16 +11,16 @@ build: [
 ]
 
 depends: [
-  "async" {>= "v0.10"}
+  "async" {>= "v0.13.0"}
   "atdgen"
-  "cohttp" {< "2.0.0"}
-  "cohttp-async" {>= "1.0.2" & < "2.0.0"}
-  "core" {>= "v0.10"}
+  "cohttp" {>= "2.0.0"}
+  "cohttp-async" {>= "2.0.0"}
+  "core" {>= "v0.13.0"}
   "hex" {>= "1.2.0"}
   "json-derivers"
-  "ocaml" {>= "4.05.0"}
+  "ocaml" {>= "4.08.0"}
   "re2"
-  "sexplib" {>= "v0.10"}
+  "sexplib" {>= "v0.13.0"}
   "uuidm"
   "uri"
   "yojson"
