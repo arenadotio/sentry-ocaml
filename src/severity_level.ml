@@ -5,7 +5,8 @@ type t =
   | `Error
   | `Warning
   | `Info
-  | `Debug ]
+  | `Debug
+  ]
 [@@deriving sexp_of]
 
 let unwrap = function
@@ -14,6 +15,7 @@ let unwrap = function
   | `Warning -> "warning"
   | `Info -> "info"
   | `Debug -> "debug"
+;;
 
 let wrap = function
   | "fatal" -> `Fatal
@@ -22,3 +24,4 @@ let wrap = function
   | "info" -> `Info
   | "debug" -> `Debug
   | s -> failwithf "Unknown severity level %s" s ()
+;;

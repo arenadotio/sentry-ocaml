@@ -4,13 +4,14 @@ type t' = private
   { uri : Uri.t
   ; public_key : string
   ; private_key : string option
-  ; project_id : int }
+  ; project_id : int
+  }
 [@@deriving compare, sexp_of]
 
 type t = t' option [@@deriving sexp_of]
 
 val make
-  : uri:Uri.t
+  :  uri:Uri.t
   -> public_key:string
   -> ?private_key:string
   -> project_id:int

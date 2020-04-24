@@ -5,7 +5,8 @@ type level =
   | `Error
   | `Warning
   | `Info
-  | `Debug ]
+  | `Debug
+  ]
 [@@deriving sexp_of]
 
 type t = private
@@ -14,11 +15,12 @@ type t = private
   ; message : string option
   ; data : Json.t String.Map.t
   ; category : string option
-  ; level : level }
+  ; level : level
+  }
 [@@deriving sexp_of]
 
 val make
-  : ?timestamp:Time.t
+  :  ?timestamp:Time.t
   -> ?type_:string
   -> ?message:string
   -> ?data:Json.t String.Map.t
@@ -27,8 +29,8 @@ val make
   -> unit
   -> t
 
-  val make_navigation
-  : ?timestamp:Time.t
+val make_navigation
+  :  ?timestamp:Time.t
   -> ?message:string
   -> ?category:string
   -> ?level:level
@@ -37,8 +39,8 @@ val make
   -> unit
   -> t
 
-  val make_http
-  : ?timestamp:Time.t
+val make_http
+  :  ?timestamp:Time.t
   -> ?message:string
   -> ?category:string
   -> ?level:level

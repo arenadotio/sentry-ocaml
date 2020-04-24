@@ -12,7 +12,8 @@ type t =
   ; tags : string String.Table.t
   ; extra : Json.t String.Table.t
   ; modules : string String.Table.t
-  ; breadcrumbs : Breadcrumb.t Queue.t }
+  ; breadcrumbs : Breadcrumb.t Queue.t
+  }
 [@@deriving sexp_of]
 
 (** Returns a new context with default data from the environment and system

@@ -15,7 +15,8 @@ type t =
   | `Perl
   | `Php
   | `Python
-  | `Ruby ]
+  | `Ruby
+  ]
 [@@deriving sexp_of]
 
 let unwrap = function
@@ -34,6 +35,7 @@ let unwrap = function
   | `Php -> "php"
   | `Python -> "python"
   | `Ruby -> "ruby"
+;;
 
 let wrap = function
   | "as3" -> `As3
@@ -52,3 +54,4 @@ let wrap = function
   | "python" -> `Python
   | "ruby" -> `Ruby
   | s -> failwithf "Unknown platform %s" s ()
+;;

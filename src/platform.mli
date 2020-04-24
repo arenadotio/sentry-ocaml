@@ -14,8 +14,9 @@ type t =
   | `Perl
   | `Php
   | `Python
-  | `Ruby ]
+  | `Ruby
+  ]
 [@@deriving sexp_of]
 
-val wrap : string -> [> t]
-val unwrap : [< t] -> string
+val wrap : string -> [> t ]
+val unwrap : [< t ] -> string
