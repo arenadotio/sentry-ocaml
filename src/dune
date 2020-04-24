@@ -1,22 +1,29 @@
 (env
-  (dev
-    (flags (:standard -w -3)))
-  (release
-    (flags (:standard -w -3))))
+ (dev
+  (flags
+   (:standard -w -3)))
+ (release
+  (flags
+   (:standard -w -3))))
 
 (library
-  (public_name sentry)
-  (libraries async_kernel atdgen cohttp.async core_kernel hex json-derivers uri uuidm re2 yojson)
-  (inline_tests (flags (-verbose)))
-  (preprocess (pps ppx_jane bisect_ppx -- --conditional --exclusions src/.exclude))
-  (preprocessor_deps .exclude))
+ (public_name sentry)
+ (libraries async_kernel atdgen cohttp.async core_kernel hex json-derivers
+   uri uuidm re2 yojson)
+ (inline_tests
+  (flags (-verbose)))
+ (preprocess
+  (pps ppx_jane bisect_ppx -- --conditional --exclusions src/.exclude))
+ (preprocessor_deps .exclude))
 
 (rule
-  (targets payloads_j.ml payloads_j.mli)
-  (deps    payloads.atd)
-  (action  (run atdgen -j -j-std payloads.atd)))
+ (targets payloads_j.ml payloads_j.mli)
+ (deps payloads.atd)
+ (action
+  (run atdgen -j -j-std payloads.atd)))
 
 (rule
-  (targets payloads_t.ml payloads_t.mli)
-  (deps    payloads.atd)
-  (action  (run atdgen -t -j-std payloads.atd)))
+ (targets payloads_t.ml payloads_t.mli)
+ (deps payloads.atd)
+ (action
+  (run atdgen -t -j-std payloads.atd)))

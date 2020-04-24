@@ -18,11 +18,12 @@ type t = private
   ; fingerprint : string list option
   ; exception_ : Exception.t list option
   ; message : Message.t option
-  ; breadcrumbs : Breadcrumb.t list }
+  ; breadcrumbs : Breadcrumb.t list
+  }
 [@@deriving sexp_of]
 
 val make
-  : ?event_id:Uuidm.t
+  :  ?event_id:Uuidm.t
   -> ?timestamp:Time.t
   -> ?context:Context.t
   -> ?tags:(string * string) list

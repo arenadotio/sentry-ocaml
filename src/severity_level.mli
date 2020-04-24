@@ -4,8 +4,9 @@ type t =
   | `Error
   | `Warning
   | `Info
-  | `Debug ]
+  | `Debug
+  ]
 [@@deriving sexp_of]
 
-val wrap : string -> [> t]
-val unwrap : [< t] -> string
+val wrap : string -> [> t ]
+val unwrap : [< t ] -> string

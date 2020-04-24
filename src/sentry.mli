@@ -1,6 +1,5 @@
 open Core_kernel
 open Async_kernel
-
 module Breadcrumb = Breadcrumb
 module Client = Client
 module Config = Config
@@ -51,11 +50,7 @@ val capture_message : ?tags:(string * string) list -> string -> unit
 
     If you pass [tags], it will be as if you called [with_tags] before this
     function. *)
-val capture_exception
-  : ?tags:(string * string) list
-  -> ?message:string
-  -> exn
-  -> unit
+val capture_exception : ?tags:(string * string) list -> ?message:string -> exn -> unit
 
 (** [capture_error ?dsn ?message e] records the backtrace from [e] and uploads
     it to Sentry.
@@ -91,5 +86,5 @@ val with_async_exn_handler_ignore : (unit -> unit Deferred.t) -> unit Deferred.t
     returns an error, it will be uploaded to Sentry and then re-raised or
     returned. *)
 val with_async_error_and_exn_handler
-  : (unit -> 'a Deferred.Or_error.t)
+  :  (unit -> 'a Deferred.Or_error.t)
   -> 'a Deferred.Or_error.t

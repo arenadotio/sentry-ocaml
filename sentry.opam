@@ -25,7 +25,7 @@ depends: [
   "uri"
   "yojson"
 
-  "dune" {build & >= "1.4.0"}
+  "dune" {build & >= "1.7.0"}
   "ppx_jane" {build}
   "bisect_ppx" {build & >= "2.0.0"}
 

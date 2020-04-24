@@ -6,12 +6,12 @@ module Mechanism : sig
     { type_ : string
     ; description : string option
     ; help_link : string option
-    ; handled : bool option
-    (* TODO: meta *)
-    ; data : string String.Map.t }
+    ; handled : bool option (* TODO: meta *)
+    ; data : string String.Map.t
+    }
 
   val make
-    : type_:string
+    :  type_:string
     -> ?description:string
     -> ?help_link:string
     -> ?handled:bool
@@ -38,10 +38,11 @@ module Frame : sig
     ; vars : string String.Map.t
     ; package : string option
     ; platform : Platform.t option
-    (* TODO: image_addr, instruction_addr, symbol_addr, instruction_offset *) }
+          (* TODO: image_addr, instruction_addr, symbol_addr, instruction_offset *)
+    }
 
   val make
-    : ?filename:string
+    :  ?filename:string
     -> ?function_:string
     -> ?module_:string
     -> ?lineno:int
@@ -58,7 +59,7 @@ module Frame : sig
     -> t Or_error.t
 
   val make_exn
-    : ?filename:string
+    :  ?filename:string
     -> ?function_:string
     -> ?module_:string
     -> ?lineno:int
@@ -83,10 +84,11 @@ type t = private
   ; module_ : string option
   ; thread_id : string option
   ; mechanism : Mechanism.t option
-  ; stacktrace : Frame.t list }
+  ; stacktrace : Frame.t list
+  }
 
 val make
-  : type_:string
+  :  type_:string
   -> ?value:string
   -> ?module_:string
   -> ?thread_id:string
@@ -96,9 +98,6 @@ val make
   -> t
 
 val to_payload : t -> Payloads_t.exception_value
-
 val list_to_payload : t list -> Payloads_t.exception_
-
 val of_exn : exn -> t
-
 val of_error : Error.t -> t
