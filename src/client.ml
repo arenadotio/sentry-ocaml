@@ -43,6 +43,15 @@ let rec send_request ~headers ~data uri =
   else return (response, body)
 ;;
 
+type api_error =
+  { status : Cohttp.Code.status_code
+  ; error : string option
+  ; event : Event.t
+  }
+[@@deriving sexp_of]
+
+exception Api_error of api_error
+
 let send_event_and_wait_exn ~dsn event =
   let headers = make_headers ~dsn event.Event.timestamp in
   let uri = Dsn.event_store_uri dsn in
@@ -54,16 +63,10 @@ let send_event_and_wait_exn ~dsn event =
     >>| Payloads_j.response_of_string
     >>| fun { Payloads_j.id } -> id
   | status ->
-    let errors =
-      Cohttp.Response.headers response
-      |> Fn.flip Cohttp.Header.get "X-Sentry-Error"
-      |> Option.value ~default:"No X-Sentry-Error header"
+    let error =
+      Cohttp.Response.headers response |> Fn.flip Cohttp.Header.get "X-Sentry-Error"
     in
-    failwithf
-      "Unexpected %d response from Sentry: %s"
-      (Cohttp.Code.code_of_status status)
-      errors
-      ()
+    raise (Api_error { status; error; event })
 ;;
 
 let send_event_and_wait ~dsn event =
@@ -73,8 +76,15 @@ let send_event_and_wait ~dsn event =
     Log.Global.info "Successfully uploaded sentry event %s" (Uuid.unwrap event.event_id);
     Some id
   | Error e ->
-    Exn.to_string e |> Log.Global.error "Failed to upload Sentry event: %s";
-    None
+    (match Monitor.extract_exn e with
+    | Api_error { status = `Too_many_requests; event; _ } ->
+      Log.Global.error
+        "Event %s not uploaded due to Sentry API limits."
+        (Uuid.unwrap event.event_id);
+      None
+    | _ ->
+      Exn.to_string e |> Log.Global.error "Failed to upload Sentry event: %s";
+      None)
 ;;
 
 let event_pipe =
