@@ -1,3 +1,8 @@
+## v0.10.0
+
+- Removed unused dependencies like async_extended and ounit
+- Better handing of 429 errors
+
 ## v0.9.0
 
 - Update Core/Async to v0.13
