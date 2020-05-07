@@ -1,3 +1,13 @@
+(* -*- tuareg -*- *)
+
+let preprocess =
+  match Sys.getenv "BISECT_ENABLE" with
+  | "yes" -> "bisect_ppx --exclusions src/.exclude"
+  | _ -> ""
+  | exception Not_found -> ""
+
+let () = Jbuild_plugin.V1.send @@ {|
+
 (env
  (dev
   (flags
@@ -13,7 +23,7 @@
  (inline_tests
   (flags (-verbose)))
  (preprocess
-  (pps ppx_jane bisect_ppx -- --conditional --exclusions src/.exclude))
+  (pps ppx_jane |} ^ preprocess ^ {|))
  (preprocessor_deps .exclude))
 
 (rule
@@ -27,3 +37,5 @@
  (deps payloads.atd)
  (action
   (run atdgen -t -j-std payloads.atd)))
+
+|}

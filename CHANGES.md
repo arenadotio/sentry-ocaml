@@ -1,7 +1,11 @@
+## v0.10.1
+
+- Don't require bisect_ppx for builds
+
 ## v0.10.0
 
 - Removed unused dependencies like async_extended and ounit
-- Better handing of 429 errors
+- Better handing of 429 errors (#27)
 
 ## v0.9.0
 
