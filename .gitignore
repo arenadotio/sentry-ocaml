@@ -1,6 +1,7 @@
 _build
 _coverage
 _esy
+_opam
 .merlin
 node_modules
 sentry.install
