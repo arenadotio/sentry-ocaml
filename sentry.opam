@@ -11,23 +11,19 @@ build: [
 ]
 
 depends: [
-  "async" {>= "v0.13.0"}
+  "async_unix" {>= "v0.13.0"}
   "atdgen"
+  "bisect_ppx" {dev & >= "2.0.0"}
   "cohttp" {>= "2.0.0"}
   "cohttp-async" {>= "2.0.0"}
-  "core" {>= "v0.13.0"}
+  "dune" {>= "1.7.0"}
   "hex" {>= "1.2.0"}
   "json-derivers"
+  "ppx_jane"
   "ocaml" {>= "4.08.0"}
   "re2"
   "sexplib" {>= "v0.13.0"}
   "uuidm"
   "uri"
   "yojson"
-
-  "dune" {build & >= "1.7.0"}
-  "ppx_jane" {build}
-  "bisect_ppx" {build & >= "2.0.0"}
-
-  "ounit" {test}
 ]
