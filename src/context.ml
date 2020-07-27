@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 type t =
   { mutable environment : string option
@@ -38,11 +38,11 @@ let add_breadcrumb crumb t =
   Queue.enqueue t.breadcrumbs crumb
 ;;
 
-let default_environment = Sys.getenv_opt "SENTRY_ENVIRONMENT"
-let default_release = Sys.getenv_opt "SENTRY_RELEASE"
+let default_environment = Sys.getenv "SENTRY_ENVIRONMENT"
+let default_release = Sys.getenv "SENTRY_RELEASE"
 
 let default_server_name =
-  match Sys.getenv_opt "SENTRY_NAME" with
+  match Sys.getenv "SENTRY_NAME" with
   | None -> Some (Unix.gethostname ())
   | value -> value
 ;;
