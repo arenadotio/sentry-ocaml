@@ -2,7 +2,7 @@
 
 let preprocess =
   match Sys.getenv "BISECT_ENABLE" with
-  | "yes" -> "bisect_ppx --exclusions src/.exclude"
+  | "yes" -> "bisect_ppx"
   | _ -> ""
   | exception Not_found -> ""
 
@@ -23,8 +23,7 @@ let () = Jbuild_plugin.V1.send @@ {|
  (inline_tests
   (flags (-verbose)))
  (preprocess
-  (pps ppx_jane |} ^ preprocess ^ {|))
- (preprocessor_deps .exclude))
+  (pps ppx_jane |} ^ preprocess ^ {|)))
 
 (rule
  (targets payloads_j.ml payloads_j.mli)
