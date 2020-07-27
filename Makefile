@@ -8,9 +8,8 @@ clean:
 	@dune clean
 
 coverage: clean
-	@BISECT_ENABLE=YES dune runtest
-	@bisect-ppx-report -I _build/default/ -html _coverage/ \
-	  `find . -name 'bisect*.out'`
+	@BISECT_ENABLE=yes dune runtest
+	@bisect-ppx-report send-to Coveralls
 
 install: build
 	@dune install
