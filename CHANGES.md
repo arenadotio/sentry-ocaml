@@ -1,3 +1,7 @@
+## v0.11.0
+
+- Support Async Monitor exceptions from v0.14
+
 ## v0.10.2
 
 - Drain cohttp response bodies so we don't leak connections on redirect or error
