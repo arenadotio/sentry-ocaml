@@ -35,6 +35,8 @@ let rec send_request ~headers ~data uri =
      |> Cohttp.Code.code_of_status
      |> Cohttp.Code.is_redirection
   then
+    Cohttp_async.Body.drain body
+    >>= fun () ->
     Cohttp.Response.headers response
     |> Cohttp.Header.get_location
     |> function
@@ -63,6 +65,8 @@ let send_event_and_wait_exn ~dsn event =
     >>| Payloads_j.response_of_string
     >>| fun { Payloads_j.id } -> id
   | status ->
+    Cohttp_async.Body.drain body
+    >>| fun () ->
     let error =
       Cohttp.Response.headers response |> Fn.flip Cohttp.Header.get "X-Sentry-Error"
     in
