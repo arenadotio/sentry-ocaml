@@ -178,7 +178,7 @@ let list_to_payload t =
 
 let backtrace_regex =
   Re2.create_exn
-    {|(Raised at|Called from) file "([^"]*)", line ([0-9]+), characters ([0-9]+)-[0-9]+|}
+    {|(?:Raised at|Called from)(?: \S+ in)? file "([^"]*)", line ([0-9]+), characters ([0-9]+)-[0-9]+|}
 ;;
 
 let of_exn exn =
@@ -253,7 +253,7 @@ let of_exn exn =
               | Atom frame ->
                 Re2.find_submatches backtrace_regex frame
                 |> (function
-                | Ok [| _; _; Some filename; Some lineno; Some colno |] ->
+                | Ok [| _; Some filename; Some lineno; Some colno |] ->
                   (try
                      let lineno = Int.of_string lineno
                      and colno = Int.of_string colno in
