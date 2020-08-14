@@ -1,3 +1,7 @@
+## v0.10.2
+
+- Drain cohttp response bodies so we don't leak connections on redirect or error
+
 ## v0.10.1
 
 - Don't require bisect_ppx for builds
