@@ -47,4 +47,5 @@
    (>= v0.13.0))
   uuidm
   uri
-  yojson))
+  (yojson
+   (>= 1.6.0))))

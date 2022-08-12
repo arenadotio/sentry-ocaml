@@ -1,2 +1,2 @@
-(** Wrapper for Yojson.Basic.json with sexp_of *)
-type t = Yojson.Basic.json [@@deriving sexp_of]
+(** Wrapper for Yojson.Basic.t with sexp_of *)
+type t = Yojson.Basic.t [@@deriving sexp_of]
