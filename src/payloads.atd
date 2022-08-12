@@ -1,4 +1,4 @@
-type json <ocaml module="Yojson.Basic"> = abstract
+type t <ocaml module="Yojson.Basic"> = abstract
 
 type capped_string_4k = string wrap <ocaml module="Capped_string_4k">
 type capped_string_512 = string wrap <ocaml module="Capped_string_512">
@@ -59,7 +59,7 @@ type breadcrumb =
   { timestamp : datetime
   ; ?type_ <json name="type"> : capped_string_512 nullable
   ; ?message : capped_string_512 nullable
-  ; ?data : (capped_string_512 *  json) list <json repr="object"> nullable
+  ; ?data : (capped_string_512 *  t) list <json repr="object"> nullable
   ; ?category : capped_string_512 nullable
   ; ?level : capped_string_512 nullable }
 
@@ -76,7 +76,7 @@ type event =
   ; ?tags : (capped_string_512 * capped_string_512) list <json repr="object"> nullable
   ; ?environment : capped_string_512 nullable
   ; ?modules : (capped_string_512 * capped_string_512) list <json repr="object"> nullable
-  ; ?extra : (capped_string_512 * json) list <json repr="object"> nullable
+  ; ?extra : (capped_string_512 * t) list <json repr="object"> nullable
   ; ?fingerprint : capped_string_512 list nullable
   ; ?exception_ <json name="exception"> : exception_ nullable
   ; ?message <json name="sentry.interfaces.Message"> : message nullable
